@@ -306,8 +306,8 @@ button:focus-visible, a:focus-visible, .upload-zone:focus-within {
 }
 
 @media (max-width: 320px) {
-  .study-controls { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 40px; }
-  .nav-button { width: 40px; }
+  .study-controls { grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 4px; }
+  .nav-button { width: 44px; }
   .answer-button { padding: 0 2px; font-size: 10px; }
   .practice-button span { margin-right: 1px; font-size: 12px; }
   .know-button span { margin-left: 2px; }

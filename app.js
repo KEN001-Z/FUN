@@ -385,7 +385,13 @@ class FlashcardApp {
     uploadZone.addEventListener("drop", (event) => this.readDroppedFile(event));
 
     document.addEventListener("keydown", (event) => {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || this.isTyping(event.target)) return;
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.code === "Space" && this.mode === "cards" && event.target === this.elements.card) {
+        event.preventDefault();
+        this.flipCard();
+        return;
+      }
+      if (this.isTyping(event.target)) return;
       if (event.code === "Space" && this.mode === "cards") {
         event.preventDefault();
         this.flipCard();
