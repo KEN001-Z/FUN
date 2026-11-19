@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f8f7f3">
     <title>Little Loop — happy studying</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="app.js" defer></script>
   </head>
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Little Loop home">
+        <a class="brand" href="index.html" aria-label="Little Loop home">
           <span class="brand-mark" aria-hidden="true">✳</span>
           <span>little loop<span class="brand-period">.</span></span>
         </a>
-        <div class="topbar-note"><span class="sparkle" aria-hidden="true">✦</span> A little practice goes a long way</div>
+        <a class="topbar-note home-practice-link" href="cbt.html"><span class="sparkle" aria-hidden="true">✦</span> CBT practice</a>
         <a class="topbar-link" href="#create">Make a quiz <span aria-hidden="true">↗</span></a>
       </header>
 
@@ -24,7 +27,8 @@
           <div class="intro-copy">
             <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR COZY STUDY CORNER</p>
             <h1 id="page-title">Big ideas, <span class="title-highlight">little loops.</span></h1>
-            <p class="intro-text">Turn a topic, your notes, or a PDF into a playful practice quiz. Learn a little, try a little, and watch it stick.</p>
+            <p class="intro-text">Turn a topic, your notes, or a PDF into practice questions, flashcards, a study plan, and clear explanations.</p>
+            <a class="intro-practice-link" href="cbt.html">Go to CBT practice <span aria-hidden="true">↗</span></a>
           </div>
           <div class="intro-doodle" aria-hidden="true">
             <span class="doodle-star">✳</span>
@@ -38,23 +42,18 @@
             <div class="panel-heading">
               <div>
                 <p class="section-kicker" id="study-kicker">YOUR DECK</p>
-                <h2 id="deck-title">A little space</h2>
+                <h2 id="deck-title">My study deck</h2>
               </div>
               <button class="icon-button shuffle-button" id="shuffle-button" type="button" aria-label="Shuffle flashcards" title="Shuffle cards">
                 <span aria-hidden="true">⤨</span>
               </button>
             </div>
 
-            <div class="study-tabs" role="tablist" aria-label="Study mode">
-              <button class="study-tab is-active" id="cards-tab" type="button" role="tab" aria-controls="flashcard" aria-selected="true" tabindex="0">✳ Flashcards</button>
-              <button class="study-tab" id="quiz-tab" type="button" role="tab" aria-controls="quiz-view" aria-selected="false" tabindex="-1">✦ CBT quiz</button>
-            </div>
-
             <div class="progress-row">
               <div class="progress-track" role="progressbar" id="progress-bar" aria-label="Deck progress" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0">
                 <span id="progress-fill"></span>
               </div>
-              <span class="progress-label" id="progress-label">0 of 6 practiced</span>
+              <span class="progress-label" id="progress-label">0 of 0 practiced</span>
             </div>
 
             <div class="card-stage">
@@ -81,26 +80,17 @@
             </div>
             <p class="keyboard-hint">Tip: use <kbd>space</kbd> to flip and <kbd>←</kbd> <kbd>→</kbd> to move</p>
             <div class="session-summary" id="session-summary" aria-live="polite"></div>
-
-            <section class="quiz-view" id="quiz-view" aria-label="Multiple-choice practice" hidden>
-              <div class="quiz-meta">
-                <span class="quiz-question-label">QUESTION <strong id="quiz-count">01 / 06</strong></span>
-                <span class="quiz-score" id="quiz-score">0 correct</span>
+            <section class="practice-history" id="practice-history" hidden>
+              <div class="practice-history-heading">
+                <div>
+                  <p class="section-kicker">KEEP GROWING</p>
+                  <h3>Recent practice</h3>
+                </div>
+                <button class="history-clear-button" id="clear-history-button" type="button">Clear</button>
               </div>
-              <h3 class="quiz-question" id="quiz-question"></h3>
-              <div class="quiz-options" id="quiz-options" role="group" aria-label="Answer choices"></div>
-              <div class="quiz-feedback" id="quiz-feedback" aria-live="polite" hidden>
-                <strong id="quiz-feedback-title"></strong>
-                <p id="quiz-explanation"></p>
-              </div>
-              <button class="generate-button quiz-next-button" id="quiz-next-button" type="button" disabled>Choose an answer <span aria-hidden="true">→</span></button>
-              <div class="quiz-complete" id="quiz-complete" hidden>
-                <span class="complete-sparkle" aria-hidden="true">✦</span>
-                <h3 id="quiz-result-title">Nice work!</h3>
-                <p id="quiz-result-copy"></p>
-                <button class="generate-button" id="retry-quiz-button" type="button">Try again <span aria-hidden="true">↻</span></button>
-              </div>
+              <div id="practice-history-list"></div>
             </section>
+
           </div>
 
           <aside class="create-panel panel" id="create" aria-labelledby="create-title">
@@ -108,10 +98,10 @@
               <span class="create-icon" aria-hidden="true">✎</span>
               <div>
                 <p class="section-kicker">MAKE IT YOURS</p>
-                <h2 id="create-title">Make a practice quiz</h2>
+                <h2 id="create-title">Create study materials</h2>
               </div>
             </div>
-            <p class="create-description">Pick a topic, add notes, or upload a PDF. Your AI study buddy will make a mini exam.</p>
+            <p class="create-description">Add a topic, notes, or a PDF. Your AI study buddy can make a CBT quiz, flashcards, a study plan, or explain a tricky idea.</p>
 
             <label class="field-label" for="topic-input">Your topic</label>
             <input id="topic-input" class="text-input" type="text" maxlength="120" placeholder="e.g. Photosynthesis, World War II">
@@ -128,14 +118,26 @@
 
             <div class="ai-service-note">
               <span class="ai-service-icon" aria-hidden="true">✦</span>
-              <p>Little Loop AI makes your quiz. The API key stays on the server; notes are sent to Gemini only when you request a quiz.</p>
+              <p>Little Loop uses Gemini first and can fall back to Kimi. Your notes are sent to an AI provider only when you request a study activity.</p>
             </div>
 
             <button class="generate-button" id="generate-button" type="button">
-              <span class="button-label">Make my practice quiz</span> <span aria-hidden="true">✦</span>
+              <span class="button-label">Make my CBT quiz</span> <span aria-hidden="true">✦</span>
             </button>
-            <button class="sample-button" id="sample-button" type="button">Try a sample deck instead</button>
-            <p class="privacy-note"><span aria-hidden="true">♡</span> PDF text is extracted in your browser before you request a quiz.</p>
+            <div class="ai-secondary-actions">
+              <button class="secondary-ai-button" id="flashcards-button" type="button">Make flashcards</button>
+              <button class="secondary-ai-button" id="study-plan-button" type="button">Build a study plan</button>
+            </div>
+            <div class="tutor-box">
+              <label class="field-label" for="tutor-question">Ask your study tutor</label>
+              <textarea class="text-input tutor-input" id="tutor-question" rows="2" maxlength="2000" placeholder="What would you like explained?"></textarea>
+              <button class="secondary-ai-button tutor-button" id="tutor-button" type="button">Explain this to me</button>
+            </div>
+            <section class="assistant-response" id="assistant-response" aria-live="polite" hidden>
+              <h3 id="assistant-response-title"></h3>
+              <p id="assistant-response-content"></p>
+            </section>
+            <p class="privacy-note"><span aria-hidden="true">♡</span> PDF text is extracted in your browser before you request a study activity.</p>
             <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
           </aside>
         </section>

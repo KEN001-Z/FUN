@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8f7f3">
+    <meta name="description" content="A calm, focused place to practice with your own multiple-choice study quiz.">
+    <title>CBT Practice — Little Loop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="cbt.js" defer></script>
+  </head>
+  <body class="cbt-page">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="Little Loop home">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>little loop<span class="brand-period">.</span></span>
+        </a>
+        <div class="topbar-note"><span class="sparkle" aria-hidden="true">✦</span> Your own space to focus</div>
+        <a class="topbar-link" href="index.html#create">Make a quiz <span aria-hidden="true">↗</span></a>
+      </header>
+
+      <main>
+        <section class="cbt-intro" aria-labelledby="page-title">
+          <div class="cbt-intro-copy">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> A LITTLE PRACTICE GOES A LONG WAY</p>
+            <h1 id="page-title">Find your <span class="title-highlight">flow.</span></h1>
+            <p class="intro-text">One question at a time. Take a breath, trust what you know, and use every answer to learn a little more.</p>
+          </div>
+          <div class="cbt-intro-art" aria-hidden="true">
+            <span class="cbt-art-orbit"></span>
+            <span class="cbt-art-spark">✦</span>
+            <span class="cbt-art-check">✓</span>
+            <span class="cbt-art-dot"></span>
+          </div>
+        </section>
+
+        <section class="cbt-empty panel" id="cbt-empty" aria-labelledby="empty-title">
+          <span class="cbt-empty-icon" aria-hidden="true">✳</span>
+          <h2 id="empty-title">Your next practice starts here.</h2>
+          <p id="cbt-status">Make a quiz from a topic or your own study notes, then come back here to practice.</p>
+          <a class="generate-button cbt-empty-link" href="index.html#create">Create a practice quiz <span aria-hidden="true">↗</span></a>
+        </section>
+
+        <section class="cbt-workspace" id="cbt-workspace" aria-label="CBT practice session" hidden>
+          <div class="cbt-card panel">
+            <div class="cbt-session-heading">
+              <div>
+                <p class="section-kicker">YOUR PRACTICE SESSION</p>
+                <h2 class="cbt-topic" id="cbt-topic">Practice quiz</h2>
+              </div>
+              <span class="cbt-session-mark" aria-hidden="true">✦</span>
+            </div>
+
+            <div class="progress-row cbt-progress-row">
+              <div class="progress-track" role="progressbar" id="progress-bar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0">
+                <span id="progress-fill"></span>
+              </div>
+              <span class="progress-label" id="progress-label">0 of 6 answered</span>
+            </div>
+
+            <div class="cbt-question-card">
+              <div class="quiz-meta">
+                <span class="quiz-question-label">QUESTION <strong id="quiz-count">01 / 06</strong></span>
+                <span class="quiz-score" id="quiz-score">0 correct</span>
+              </div>
+              <h3 class="quiz-question" id="quiz-question"></h3>
+              <div class="quiz-options" id="quiz-options" role="group" aria-label="Answer choices"></div>
+              <div class="quiz-feedback" id="quiz-feedback" aria-live="polite" hidden>
+                <strong id="quiz-feedback-title"></strong>
+                <p id="quiz-explanation"></p>
+              </div>
+              <button class="generate-button quiz-next-button" id="quiz-next-button" type="button" disabled>Choose an answer <span aria-hidden="true">→</span></button>
+              <div class="quiz-complete" id="quiz-complete" hidden>
+                <span class="complete-sparkle" aria-hidden="true">✦</span>
+                <h3 id="quiz-result-title">Nice work!</h3>
+                <p id="quiz-result-copy"></p>
+                <div class="grade-summary" id="grade-summary"></div>
+                <section class="missed-review" id="missed-review" hidden>
+                  <div class="missed-review-heading">
+                    <div>
+                      <p class="section-kicker">YOUR REVIEW NOTES</p>
+                      <h3 id="missed-review-title">Questions to revisit</h3>
+                    </div>
+                    <span id="missed-count"></span>
+                  </div>
+                  <div id="missed-review-list"></div>
+                </section>
+                <button class="generate-button" id="retry-quiz-button" type="button">Try again <span aria-hidden="true">↻</span></button>
+              </div>
+            </div>
+            <p class="cbt-reassurance"><span aria-hidden="true">♡</span> This is practice, not a test. Every question is a chance to learn.</p>
+          </div>
+
+          <aside class="cbt-guide panel" aria-labelledby="guide-title">
+            <div class="cbt-guide-icon" aria-hidden="true">☼</div>
+            <p class="section-kicker">A NOTE FOR YOU</p>
+            <h2 id="guide-title">No rush. You’re learning as you go.</h2>
+            <p>Choose the answer that feels right. After each question, you’ll see a clear explanation to help the idea stick.</p>
+            <div class="cbt-guide-divider"></div>
+            <div class="cbt-guide-tip">
+              <span aria-hidden="true">✧</span>
+              <p><strong>Small steps count.</strong><br>Focus on this question, not the whole deck.</p>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="footer">
+          <span>Made for curious minds <span aria-hidden="true">✿</span></span>
+          <span>Small steps. Strong memories.</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

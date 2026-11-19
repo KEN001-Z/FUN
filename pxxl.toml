@@ -1,0 +1,7 @@
+version = 1
+
+[build]
+language = "javascript"
+nodeVersion = "24"
+startCommand = "node server.mjs"
+port = 3000

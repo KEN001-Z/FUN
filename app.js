@@ -2,177 +2,10 @@
 
 const MAX_STUDY_MATERIAL_LENGTH = 24000;
 
-class QuizSession {
-  constructor(questions) {
-    this.questions = questions;
-    this.index = 0;
-    this.answers = Array(questions.length).fill(null);
-    this.selectedAnswer = null;
-    this.isChecked = false;
-    this.isComplete = false;
-  }
-
-  get score() {
-    return this.answers.reduce((total, answer, index) =>
-      total + (answer === this.questions[index].correctAnswerIndex ? 1 : 0), 0
-    );
-  }
-
-  get answeredCount() {
-    return this.answers.filter((answer) => answer !== null).length;
-  }
-
-  selectAnswer(index) {
-    if (!this.isChecked) this.selectedAnswer = index;
-  }
-
-  checkAnswer() {
-    if (this.selectedAnswer === null || this.isChecked) return;
-    this.answers[this.index] = this.selectedAnswer;
-    this.isChecked = true;
-  }
-
-  next() {
-    if (!this.isChecked) return;
-    this.index += 1;
-    this.selectedAnswer = null;
-    this.isChecked = false;
-    this.isComplete = this.index >= this.questions.length;
-  }
-
-  retry() {
-    this.index = 0;
-    this.answers = Array(this.questions.length).fill(null);
-    this.selectedAnswer = null;
-    this.isChecked = false;
-    this.isComplete = false;
-  }
-}
-
 class Flashcard {
   constructor(question, answer) {
     this.question = question;
     this.answer = answer;
-  }
-}
-
-class FlashcardGenerator {
-  constructor() {
-    this.stopWords = new Set([
-      "about", "after", "again", "also", "among", "because", "before", "being",
-      "between", "could", "does", "during", "each", "from", "have", "into",
-      "more", "most", "often", "other", "over", "same", "some", "such", "than",
-      "that", "their", "there", "these", "they", "this", "those", "through",
-      "under", "used", "using", "very", "which", "while", "with", "would",
-      "your", "when", "where", "what", "were", "will", "within", "without"
-    ]);
-  }
-
-  generate(material) {
-    const text = this.cleanMaterial(material);
-    const explicitCards = this.readQuestionAnswerPairs(text);
-    const qaLines = /^(?:Q|Question|A|Answer)\s*:/i;
-    const sentenceText = text.split(/\r?\n/).filter((line) => !qaLines.test(line)).join(" ");
-    const sentences = this.splitIntoSentences(sentenceText);
-    const cards = [...explicitCards];
-
-    for (const sentence of sentences) {
-      if (cards.length >= 16) break;
-      if (this.looksLikeQuestion(sentence)) continue;
-
-      const definitionCard = this.makeDefinitionCard(sentence);
-      if (definitionCard) {
-        cards.push(definitionCard);
-        continue;
-      }
-
-      const clozeCard = this.makeClozeCard(sentence);
-      if (clozeCard) cards.push(clozeCard);
-    }
-
-    return this.removeDuplicates(cards).slice(0, 16);
-  }
-
-  cleanMaterial(material) {
-    return material
-      .replace(/```[\s\S]*?```/g, " ")
-      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-      .replace(/^\s{0,3}#{1,6}\s*/gm, "")
-      .replace(/^\s*[-*+]\s+/gm, "")
-      .replace(/^\s*\d+[.)]\s+/gm, "")
-      .replace(/[*_`>#]/g, "")
-      .replace(/[ \t]+/g, " ")
-      .replace(/\n{2,}/g, "\n")
-      .trim();
-  }
-
-  readQuestionAnswerPairs(text) {
-    const cards = [];
-    const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-
-    for (let index = 0; index < lines.length; index += 1) {
-      const question = lines[index].match(/^(?:Q|Question)\s*:\s*(.+)$/i);
-      if (!question) continue;
-
-      const answer = lines[index + 1]?.match(/^(?:A|Answer)\s*:\s*(.+)$/i);
-      if (answer) {
-        cards.push(new Flashcard(question[1], answer[1]));
-        index += 1;
-      }
-    }
-
-    return cards;
-  }
-
-  splitIntoSentences(text) {
-    return text
-      .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
-      .map((sentence) => sentence.trim())
-      .filter((sentence) => sentence.length >= 28 && sentence.length <= 280);
-  }
-
-  looksLikeQuestion(sentence) {
-    return sentence.endsWith("?") || /^(?:Q|Question)\s*:/i.test(sentence);
-  }
-
-  makeDefinitionCard(sentence) {
-    const definition = sentence.match(
-      /^(.{2,65}?)\s+(?:is defined as|is known as|are known as|refers to|means|is|are)\s+(.{8,})$/i
-    );
-    if (!definition) return null;
-
-    const subject = definition[1].replace(/^(?:the|a|an)\s+/i, "").trim();
-    const answer = definition[2].replace(/[.!?]+$/, "").trim();
-    if (!subject || !answer || subject.length > 65) return null;
-
-    return new Flashcard(`What is ${subject}?`, answer);
-  }
-
-  makeClozeCard(sentence) {
-    const words = [...sentence.matchAll(/[A-Za-z][A-Za-z'-]{4,}/g)];
-    const candidates = words.filter((match) => !this.stopWords.has(match[0].toLowerCase()));
-    if (candidates.length === 0) return null;
-
-    const keyword = candidates.reduce((longest, candidate) =>
-      candidate[0].length > longest[0].length ? candidate : longest
-    );
-    const answer = keyword[0].replace(/^['-]+|['-]+$/g, "");
-    const questionText = sentence.slice(0, keyword.index)
-      + "_____"
-      + sentence.slice(keyword.index + keyword[0].length);
-
-    return new Flashcard(`Fill in the missing idea: ${questionText}`, answer);
-  }
-
-  removeDuplicates(cards) {
-    const seen = new Set();
-    return cards.filter((card) => {
-      const key = card.question.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
   }
 }
 
@@ -232,16 +65,11 @@ class StudySession {
 
 class FlashcardApp {
   constructor() {
-    this.generator = new FlashcardGenerator();
-    this.deckTitle = "A little space";
+    this.deckTitle = "My study deck";
     this.isFlipped = false;
-    this.mode = "cards";
     this.pdfJsPromise = null;
-    this.session = new StudySession(this.makeSampleCards());
-    this.quizSession = new QuizSession(this.makeSampleQuestions());
+    this.session = new StudySession([]);
     this.elements = {
-      studyPanel: document.querySelector(".study-panel"),
-      studyKicker: document.querySelector("#study-kicker"),
       card: document.querySelector("#flashcard"),
       cardContent: document.querySelector("#card-content"),
       cardTag: document.querySelector("#card-tag"),
@@ -258,82 +86,18 @@ class FlashcardApp {
       formMessage: document.querySelector("#form-message"),
       generateButton: document.querySelector("#generate-button"),
       generateButtonLabel: document.querySelector(".button-label"),
-      cardsTab: document.querySelector("#cards-tab"),
-      quizTab: document.querySelector("#quiz-tab"),
-      quizView: document.querySelector("#quiz-view"),
-      quizMeta: document.querySelector(".quiz-meta"),
-      quizCount: document.querySelector("#quiz-count"),
-      quizScore: document.querySelector("#quiz-score"),
-      quizQuestion: document.querySelector("#quiz-question"),
-      quizOptions: document.querySelector("#quiz-options"),
-      quizFeedback: document.querySelector("#quiz-feedback"),
-      quizFeedbackTitle: document.querySelector("#quiz-feedback-title"),
-      quizExplanation: document.querySelector("#quiz-explanation"),
-      quizNextButton: document.querySelector("#quiz-next-button"),
-      quizComplete: document.querySelector("#quiz-complete"),
-      quizResultTitle: document.querySelector("#quiz-result-title"),
-      quizResultCopy: document.querySelector("#quiz-result-copy")
+      flashcardsButton: document.querySelector("#flashcards-button"),
+      studyPlanButton: document.querySelector("#study-plan-button"),
+      tutorButton: document.querySelector("#tutor-button"),
+      tutorQuestion: document.querySelector("#tutor-question"),
+      assistantResponse: document.querySelector("#assistant-response"),
+      assistantResponseTitle: document.querySelector("#assistant-response-title"),
+      assistantResponseContent: document.querySelector("#assistant-response-content")
     };
 
     this.bindEvents();
+    this.renderPracticeHistory();
     this.render();
-  }
-
-  makeSampleCards() {
-    return [
-      new Flashcard("What is the closest star to Earth?", "The Sun."),
-      new Flashcard("Fill in the missing idea: Earth takes about 365 days to _____ around the Sun.", "orbit"),
-      new Flashcard("What is a light-year?", "The distance light travels in one year."),
-      new Flashcard("Fill in the missing idea: The _____ is the largest planet in our solar system.", "Jupiter"),
-      new Flashcard("What causes the phases of the Moon?", "We see different portions of its sunlit half as it orbits Earth."),
-      new Flashcard("Fill in the missing idea: A planet's path around a star is called its _____.", "orbit")
-    ];
-  }
-
-  makeSampleQuestions() {
-    return [
-      {
-        question: "Which object is at the center of our solar system?",
-        options: ["The Moon", "The Sun", "Jupiter", "Polaris"],
-        correctAnswerIndex: 1,
-        explanation: "The planets in our solar system orbit the Sun, which is its central star."
-      },
-      {
-        question: "What is the name for the path a planet takes around a star?",
-        options: ["An axis", "A crater", "An orbit", "A phase"],
-        correctAnswerIndex: 2,
-        explanation: "An orbit is the path one object follows as it moves around another in space."
-      },
-      {
-        question: "About how long does Earth take to orbit the Sun once?",
-        options: ["One day", "One month", "One year", "One decade"],
-        correctAnswerIndex: 2,
-        explanation: "One trip around the Sun takes Earth about 365 days, which makes a year."
-      },
-      {
-        question: "Which planet is the largest in our solar system?",
-        options: ["Mars", "Venus", "Saturn", "Jupiter"],
-        correctAnswerIndex: 3,
-        explanation: "Jupiter is the largest planet in the solar system."
-      },
-      {
-        question: "What does a light-year measure?",
-        options: ["A unit of distance", "A planet's age", "A star's brightness", "A unit of time"],
-        correctAnswerIndex: 0,
-        explanation: "A light-year is the distance light travels in one year."
-      },
-      {
-        question: "Why do we see different phases of the Moon?",
-        options: [
-          "Earth's shadow always covers part of it",
-          "The Moon changes its shape",
-          "We see different portions of its sunlit half as it orbits Earth",
-          "The Sun moves behind the Moon each night"
-        ],
-        correctAnswerIndex: 2,
-        explanation: "The Moon is always half-lit by the Sun; its orbit changes how much of that lit half we see."
-      }
-    ];
   }
 
   bindEvents() {
@@ -343,31 +107,12 @@ class FlashcardApp {
     document.querySelector("#know-button").addEventListener("click", () => this.markKnown());
     document.querySelector("#practice-button").addEventListener("click", () => this.markForPractice());
     document.querySelector("#shuffle-button").addEventListener("click", () => this.shuffle());
-    this.elements.generateButton.addEventListener("click", () => this.generateQuiz());
-    document.querySelector("#sample-button").addEventListener("click", () => this.loadSampleDeck());
-    this.elements.cardsTab.addEventListener("click", () => this.setMode("cards"));
-    this.elements.quizTab.addEventListener("click", () => this.setMode("quiz"));
-    this.elements.cardsTab.parentElement.addEventListener("keydown", (event) => {
-      const tabs = [this.elements.cardsTab, this.elements.quizTab];
-      const selectedIndex = tabs.indexOf(event.target);
-      let nextIndex = selectedIndex;
-
-      if (event.key === "ArrowRight") nextIndex = (selectedIndex + 1) % tabs.length;
-      else if (event.key === "ArrowLeft") nextIndex = (selectedIndex - 1 + tabs.length) % tabs.length;
-      else if (event.key === "Home") nextIndex = 0;
-      else if (event.key === "End") nextIndex = tabs.length - 1;
-      else return;
-
-      event.preventDefault();
-      tabs[nextIndex].focus();
-      this.setMode(nextIndex === 0 ? "cards" : "quiz");
-    });
-    this.elements.quizNextButton.addEventListener("click", () => this.advanceQuiz());
-    document.querySelector("#retry-quiz-button").addEventListener("click", () => {
-      this.quizSession.retry();
-      this.renderQuiz();
-    });
+    this.elements.generateButton.addEventListener("click", () => this.runStudyTask("quiz", this.elements.generateButton));
+    this.elements.flashcardsButton.addEventListener("click", () => this.runStudyTask("flashcards", this.elements.flashcardsButton));
+    this.elements.studyPlanButton.addEventListener("click", () => this.runStudyTask("study_plan", this.elements.studyPlanButton));
+    this.elements.tutorButton.addEventListener("click", () => this.runStudyTask("tutor", this.elements.tutorButton));
     this.elements.fileInput.addEventListener("change", (event) => this.readFile(event));
+    document.querySelector("#clear-history-button").addEventListener("click", () => this.clearPracticeHistory());
 
     const uploadZone = document.querySelector(".upload-zone");
     for (const eventName of ["dragenter", "dragover"]) {
@@ -386,18 +131,18 @@ class FlashcardApp {
 
     document.addEventListener("keydown", (event) => {
       if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.code === "Space" && this.mode === "cards" && event.target === this.elements.card) {
+      if (event.code === "Space" && event.target === this.elements.card) {
         event.preventDefault();
         this.flipCard();
         return;
       }
       if (this.isTyping(event.target)) return;
-      if (event.code === "Space" && this.mode === "cards") {
+      if (event.code === "Space") {
         event.preventDefault();
         this.flipCard();
-      } else if (event.key === "ArrowRight" && this.mode === "cards") {
+      } else if (event.key === "ArrowRight") {
         this.moveNext();
-      } else if (event.key === "ArrowLeft" && this.mode === "cards") {
+      } else if (event.key === "ArrowLeft") {
         this.movePrevious();
       }
     });
@@ -433,7 +178,7 @@ class FlashcardApp {
       if (!this.elements.topicInput.value.trim()) {
         this.elements.topicInput.value = file.name.replace(/\.(pdf|txt|md)$/i, "").replace(/[-_]/g, " ");
       }
-      this.showMessage(`Added ${file.name}. Check the extracted text, then make your quiz.`, true);
+      this.showMessage(`Added ${file.name}. Check the extracted text, then choose a study activity.`, true);
     } catch (error) {
       this.showMessage(`Couldn't read that file: ${error.message}`);
     }
@@ -482,12 +227,13 @@ class FlashcardApp {
     return text;
   }
 
-  async generateQuiz() {
+  async runStudyTask(task, button) {
     const topic = this.elements.topicInput.value.trim();
     const material = this.elements.materialInput.value.trim();
-    if (!topic && !material) {
-      this.showMessage("Add a topic or some study material to get started.");
-      this.elements.topicInput.focus();
+    const question = this.elements.tutorQuestion.value.trim();
+    if (task === "tutor" ? !question : !topic && !material) {
+      this.showMessage(task === "tutor" ? "Add a question for your study tutor." : "Add a topic or some study material to get started.");
+      (task === "tutor" ? this.elements.tutorQuestion : this.elements.topicInput).focus();
       return;
     }
     if (material.length > MAX_STUDY_MATERIAL_LENGTH) {
@@ -496,47 +242,74 @@ class FlashcardApp {
       return;
     }
 
-    this.elements.generateButton.disabled = true;
-    this.elements.generateButton.setAttribute("aria-busy", "true");
-    this.elements.generateButtonLabel.textContent = "Making your quiz…";
+    const actionButtons = [
+      this.elements.generateButton,
+      this.elements.flashcardsButton,
+      this.elements.studyPlanButton,
+      this.elements.tutorButton
+    ];
+    const originalLabel = button === this.elements.generateButton
+      ? this.elements.generateButtonLabel.textContent
+      : button.textContent;
+    for (const actionButton of actionButtons) actionButton.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    if (button === this.elements.generateButton) {
+      this.elements.generateButtonLabel.textContent = "Preparing your quiz…";
+    } else {
+      button.textContent = "Working on it…";
+    }
     this.showMessage("Asking your study buddy…");
     try {
-      const questions = await this.requestQuiz({ topic, material });
-      this.quizSession = new QuizSession(questions);
-      this.session = new StudySession(questions.map((question) =>
-        new Flashcard(question.question, question.options[question.correctAnswerIndex])
-      ));
-      this.isFlipped = false;
-      this.elements.sessionSummary.textContent = "";
-      this.deckTitle = topic || "My practice quiz";
-      this.setMode("quiz");
-      this.render();
-      this.showMessage(`${questions.length} flashcards and quiz questions ready. You’ve got this!`, true);
+      const result = await this.requestStudyTask(task, { topic, material, question });
+      this.elements.assistantResponse.hidden = true;
+      if (task === "quiz") {
+        const questions = this.validateQuestions(result);
+        sessionStorage.setItem("little-loop-practice", JSON.stringify({ topic, questions }));
+        window.location.assign("cbt.html");
+      } else if (task === "flashcards") {
+        const cards = this.validateFlashcards(result);
+        this.session = new StudySession(cards.map((card) => new Flashcard(card.question, card.answer)));
+        this.deckTitle = topic || "My flashcards";
+        this.isFlipped = false;
+        this.elements.sessionSummary.textContent = "";
+        this.render();
+        this.showMessage(`${cards.length} flashcards are ready to study.`, true);
+      } else if (task === "tutor") {
+        this.showAssistantResponse("Your study tutor", result.answer);
+        this.showMessage("Here's an explanation to help you understand.", true);
+      } else {
+        this.showAssistantResponse("Your study plan", result.plan);
+        this.showMessage("Your focused study plan is ready.", true);
+      }
     } catch (error) {
-      this.showMessage(`Couldn't make the quiz: ${error.message}`);
+      this.showMessage(`Couldn't complete that study activity: ${error.message}`);
     } finally {
-      this.elements.generateButton.disabled = false;
-      this.elements.generateButton.removeAttribute("aria-busy");
-      this.elements.generateButtonLabel.textContent = "Make my practice quiz";
+      for (const actionButton of actionButtons) actionButton.disabled = false;
+      button.removeAttribute("aria-busy");
+      if (button === this.elements.generateButton) {
+        this.elements.generateButtonLabel.textContent = originalLabel;
+      } else {
+        button.textContent = originalLabel;
+      }
     }
   }
 
-  async requestQuiz({ topic, material }) {
+  async requestStudyTask(task, { topic, material, question }) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    const timeout = setTimeout(() => controller.abort(), 85000);
     try {
-      const response = await fetch("/api/generate-quiz", {
+      const response = await fetch("/api/study-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, material }),
+        body: JSON.stringify({ task, topic, material, question }),
         signal: controller.signal
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || `The quiz service returned HTTP ${response.status}.`);
-      return this.validateQuestions(data);
+      if (!response.ok) throw new Error(data.error || `The study service returned HTTP ${response.status}.`);
+      return data;
     } catch (error) {
       if (error.name === "AbortError") {
-        throw new Error("The request took too long. Try a smaller study guide.");
+        throw new Error("The request took too long. Try again with shorter study notes.");
       }
       if (error instanceof TypeError) {
         throw new Error("Couldn't reach Little Loop. Start the app server and try again.");
@@ -582,134 +355,22 @@ class FlashcardApp {
     return validQuestions;
   }
 
-  setMode(mode) {
-    this.mode = mode;
-    const isQuiz = mode === "quiz";
-    this.elements.studyPanel.classList.toggle("is-quiz", isQuiz);
-    this.elements.studyKicker.textContent = isQuiz ? "CBT PRACTICE" : "YOUR DECK";
-    this.elements.cardsTab.classList.toggle("is-active", !isQuiz);
-    this.elements.cardsTab.setAttribute("aria-selected", String(!isQuiz));
-    this.elements.cardsTab.tabIndex = isQuiz ? -1 : 0;
-    this.elements.quizTab.classList.toggle("is-active", isQuiz);
-    this.elements.quizTab.setAttribute("aria-selected", String(isQuiz));
-    this.elements.quizTab.tabIndex = isQuiz ? 0 : -1;
-    this.elements.quizView.hidden = !isQuiz;
-    if (isQuiz) this.renderQuiz();
-    else this.render();
+  validateFlashcards(result) {
+    const cards = result?.cards;
+    if (!Array.isArray(cards) || cards.length < 1 || cards.length > 16
+      || cards.some((card) =>
+        typeof card?.question !== "string" || !card.question.trim()
+        || typeof card?.answer !== "string" || !card.answer.trim()
+      )) {
+      throw new Error("The AI returned invalid flashcards. Please try again.");
+    }
+    return cards.map((card) => ({ question: card.question.trim(), answer: card.answer.trim() }));
   }
 
-  renderQuiz() {
-    const session = this.quizSession;
-    if (session.questions.length === 0) {
-      this.elements.quizMeta.hidden = true;
-      this.elements.quizQuestion.hidden = true;
-      this.elements.quizOptions.hidden = true;
-      this.elements.quizFeedback.hidden = true;
-      this.elements.quizComplete.hidden = false;
-      this.elements.quizNextButton.hidden = true;
-      this.elements.quizResultTitle.textContent = "No practice quiz yet";
-      this.elements.quizResultCopy.textContent = "Add a topic or study material, then make a quiz to begin.";
-      return;
-    }
-
-    const isComplete = session.isComplete;
-    const question = session.questions[session.index];
-    this.elements.quizMeta.hidden = isComplete;
-    this.elements.quizQuestion.hidden = isComplete;
-    this.elements.quizOptions.hidden = isComplete;
-    this.elements.quizFeedback.hidden = isComplete || !session.isChecked;
-    this.elements.quizComplete.hidden = !isComplete;
-    this.elements.quizNextButton.hidden = isComplete;
-
-    if (isComplete) {
-      this.elements.quizResultTitle.textContent = session.score === session.questions.length
-        ? "Perfect score!"
-        : "Nice work!";
-      this.elements.quizResultCopy.textContent =
-        `You got ${session.score} of ${session.questions.length} questions correct.`;
-      this.elements.progressFill.style.width = "100%";
-      this.elements.progressLabel.textContent = `${session.questions.length} of ${session.questions.length} answered`;
-      this.elements.progressBar.setAttribute("aria-valuemax", String(session.questions.length));
-      this.elements.progressBar.setAttribute("aria-valuenow", String(session.questions.length));
-      return;
-    }
-
-    this.elements.quizCount.textContent =
-      `${String(session.index + 1).padStart(2, "0")} / ${String(session.questions.length).padStart(2, "0")}`;
-    this.elements.quizScore.textContent = `${session.score} correct`;
-    this.elements.quizQuestion.textContent = question.question;
-    this.elements.quizOptions.replaceChildren();
-    question.options.forEach((option, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "quiz-option";
-      button.disabled = session.isChecked;
-      button.setAttribute("aria-pressed", String(session.selectedAnswer === index));
-      button.classList.toggle("is-selected", session.selectedAnswer === index);
-      if (session.isChecked && index === question.correctAnswerIndex) {
-        button.classList.add("is-correct");
-      } else if (session.isChecked && index === session.selectedAnswer) {
-        button.classList.add("is-incorrect");
-      }
-      const letter = document.createElement("span");
-      letter.className = "option-letter";
-      letter.setAttribute("aria-hidden", "true");
-      letter.textContent = String.fromCharCode(65 + index);
-      button.append(letter, document.createTextNode(option));
-      button.addEventListener("click", () => {
-        session.selectAnswer(index);
-        this.renderQuiz();
-        this.elements.quizOptions.querySelector(".is-selected")?.focus();
-      });
-      this.elements.quizOptions.append(button);
-    });
-
-    if (session.isChecked) {
-      const isCorrect = session.answers[session.index] === question.correctAnswerIndex;
-      this.elements.quizFeedback.classList.toggle("is-wrong", !isCorrect);
-      this.elements.quizFeedbackTitle.textContent = isCorrect
-        ? "That's right!"
-        : `Not quite. The correct answer is ${question.options[question.correctAnswerIndex]}.`;
-      this.elements.quizExplanation.textContent = question.explanation;
-      this.elements.quizNextButton.disabled = false;
-      this.elements.quizNextButton.innerHTML = session.index === session.questions.length - 1
-        ? 'See results <span aria-hidden="true">→</span>'
-        : 'Next question <span aria-hidden="true">→</span>';
-    } else {
-      this.elements.quizFeedback.classList.remove("is-wrong");
-      this.elements.quizNextButton.disabled = session.selectedAnswer === null;
-      this.elements.quizNextButton.innerHTML = session.selectedAnswer === null
-        ? 'Choose an answer <span aria-hidden="true">→</span>'
-        : 'Check answer <span aria-hidden="true">→</span>';
-    }
-
-    const answered = session.answeredCount;
-    this.elements.progressFill.style.width = `${(answered / session.questions.length) * 100}%`;
-    this.elements.progressLabel.textContent = `${answered} of ${session.questions.length} answered`;
-    this.elements.progressBar.setAttribute("aria-valuemax", String(session.questions.length));
-    this.elements.progressBar.setAttribute("aria-valuenow", String(answered));
-  }
-
-  advanceQuiz() {
-    if (!this.quizSession.isChecked) {
-      this.quizSession.checkAnswer();
-    } else {
-      this.quizSession.next();
-    }
-    this.renderQuiz();
-  }
-
-  loadSampleDeck() {
-    this.deckTitle = "A little space";
-    this.session = new StudySession(this.makeSampleCards());
-    this.quizSession = new QuizSession(this.makeSampleQuestions());
-    this.isFlipped = false;
-    this.elements.topicInput.value = "The solar system";
-    this.elements.materialInput.value = "";
-    this.elements.sessionSummary.textContent = "";
-    this.setMode("cards");
-    this.render();
-    this.showMessage("Sample deck and CBT quiz loaded. Pick a study mode to play!", true);
+  showAssistantResponse(title, content) {
+    this.elements.assistantResponseTitle.textContent = title;
+    this.elements.assistantResponseContent.textContent = content;
+    this.elements.assistantResponse.hidden = false;
   }
 
   flipCard() {
@@ -770,10 +431,6 @@ class FlashcardApp {
   render() {
     this.elements.deckTitle.textContent = this.deckTitle;
     this.renderCard();
-    if (this.mode === "quiz") {
-      this.renderQuiz();
-      return;
-    }
     const total = this.session.cards.length;
     const practiced = this.session.practicedCount;
     const progressPercent = total === 0 ? 0 : (practiced / total) * 100;
@@ -809,6 +466,80 @@ class FlashcardApp {
   showMessage(message, isSuccess = false) {
     this.elements.formMessage.textContent = message;
     this.elements.formMessage.classList.toggle("success", isSuccess);
+  }
+
+  getPracticeHistory() {
+    try {
+      const history = JSON.parse(localStorage.getItem("little-loop-practice-history") || "[]");
+      return Array.isArray(history) ? history : [];
+    } catch {
+      return [];
+    }
+  }
+
+  clearPracticeHistory() {
+    localStorage.removeItem("little-loop-practice-history");
+    this.renderPracticeHistory();
+  }
+
+  renderPracticeHistory() {
+    const history = this.getPracticeHistory();
+    const section = document.querySelector("#practice-history");
+    const list = document.querySelector("#practice-history-list");
+    section.hidden = history.length === 0;
+    list.replaceChildren();
+
+    history.slice(0, 8).forEach((attempt) => {
+      const item = document.createElement("article");
+      item.className = "history-item";
+
+      const heading = document.createElement("div");
+      heading.className = "history-item-heading";
+      const title = document.createElement("strong");
+      title.textContent = attempt.topic || "Practice quiz";
+      const score = document.createElement("span");
+      const correct = Number.isInteger(attempt.score) ? attempt.score : 0;
+      const total = Number.isInteger(attempt.total) ? attempt.total : 6;
+      score.textContent = `${correct}/${total}`;
+      heading.append(title, score);
+
+      const meta = document.createElement("p");
+      const date = attempt.completedAt ? new Date(attempt.completedAt) : null;
+      const missed = Array.isArray(attempt.missed) ? attempt.missed.length : 0;
+      meta.textContent = date && !Number.isNaN(date.valueOf())
+        ? `${date.toLocaleDateString()} · ${missed} ${missed === 1 ? "question" : "questions"} to review`
+        : `${missed} ${missed === 1 ? "question" : "questions"} to review`;
+
+      item.append(heading, meta);
+      if (Array.isArray(attempt.missed) && attempt.missed.length > 0) {
+        const details = document.createElement("div");
+        details.className = "history-missed-details";
+        attempt.missed.slice(0, 5).forEach((missedItem) => {
+          const card = document.createElement("article");
+          card.className = "history-missed-item";
+
+          const question = document.createElement("strong");
+          question.textContent = missedItem.question || "Past question";
+
+          const userAnswer = document.createElement("p");
+          userAnswer.textContent = missedItem.selectedAnswer === null
+            ? "Your answer: Not answered"
+            : `Your answer: ${missedItem.selectedAnswer || "No answer"}`;
+
+          const correctAnswer = document.createElement("p");
+          correctAnswer.className = "history-correct-answer";
+          correctAnswer.textContent = `Correct answer: ${missedItem.correctAnswer || "Unavailable"}`;
+
+          const explanation = document.createElement("p");
+          explanation.textContent = missedItem.explanation || "";
+
+          card.append(question, userAnswer, correctAnswer, explanation);
+          details.append(card);
+        });
+        item.append(details);
+      }
+      list.append(item);
+    });
   }
 }
 
