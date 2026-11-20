@@ -108,6 +108,41 @@ test("uses only Gemini when its request fails, without falling back to Kimi", as
   assert.match(calls[1], /Gemini returned HTTP 404/);
 });
 
+test("reports Gemini unavailability, quota limits, and timeouts with appropriate statuses", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    for (const [providerStatus, expectedStatus, expectedMessage] of [
+      [503, 503, /temporarily unavailable/],
+      [429, 429, /quota reached/]
+    ]) {
+      await assert.rejects(
+        generateStudyContent(
+          { task: "quiz", topic: "Biology" },
+          { geminiApiKey: "test-gemini-key" },
+          async () => ({ ok: false, status: providerStatus, json: async () => ({}) })
+        ),
+        { status: expectedStatus, message: expectedMessage }
+      );
+    }
+
+    await assert.rejects(
+      generateStudyContent(
+        { task: "quiz", topic: "Biology" },
+        { geminiApiKey: "test-gemini-key" },
+        async () => {
+          const error = new Error("aborted");
+          error.name = "AbortError";
+          throw error;
+        }
+      ),
+      { status: 504, message: /Gemini took too long to respond/ }
+    );
+  } finally {
+    console.error = originalError;
+  }
+});
+
 test("generates and validates AI flashcards", async () => {
   const result = await generateStudyContent(
     { task: "flashcards", topic: "Biology", material: "Cell notes" },
@@ -163,12 +198,14 @@ test("generates tutor explanations and study plans", async () => {
 test("sends the configured server key and returns validated questions", async () => {
   let capturedUrl;
   let capturedHeaders;
+  let capturedBody;
   const result = await generateQuiz(
     { topic: "Biology", material: "Cell notes" },
     "test-only-server-key",
     async (url, options) => {
       capturedUrl = url;
       capturedHeaders = options.headers;
+      capturedBody = JSON.parse(options.body);
       return {
         ok: true,
         status: 200,
@@ -184,7 +221,9 @@ test("sends the configured server key and returns validated questions", async ()
   );
 
   assert.match(capturedUrl, /generativelanguage\.googleapis\.com/);
+  assert.match(capturedUrl, /models\/gemini-4-hydrogen:generateContent/);
   assert.equal(capturedHeaders["x-goog-api-key"], "test-only-server-key");
+  assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "medium");
   assert.equal(result.questions.length, 6);
   assert.equal(JSON.stringify(result).includes("test-only-server-key"), false);
 });

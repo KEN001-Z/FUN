@@ -12,9 +12,18 @@ window.requestStudyTask = async function requestStudyTask(task, payload, options
     });
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.toLowerCase().includes("application/json")) {
+      if (response.status === 503) {
+        throw new Error("Gemini is temporarily unavailable. Please try again shortly.");
+      }
+      if (response.status === 504) {
+        throw new Error("Gemini took too long to respond. Try again with shorter study material.");
+      }
+      if (response.status === 429) {
+        throw new Error("Gemini rate limit or quota reached. Please try again later.");
+      }
       if (response.status === 502) {
         throw new Error(
-          "The study service returned HTTP 502. Check Pxxl runtime logs for AI provider errors, and verify that at least one configured provider key is valid and active."
+          "The study service returned HTTP 502. Check Pxxl runtime logs for Gemini errors, and verify the Gemini API key and model."
         );
       }
       throw new Error(

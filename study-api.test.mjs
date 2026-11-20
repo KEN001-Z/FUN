@@ -20,6 +20,25 @@ test("explains when the study endpoint returns HTML instead of JSON", async () =
 
   await assert.rejects(
     window.requestStudyTask("quiz", { topic: "Biology" }),
-    /HTTP 502.*Pxxl runtime logs.*provider key is valid and active/
+    /HTTP 502.*Pxxl runtime logs.*Gemini API key and model/
+  );
+});
+
+test("explains when Gemini is temporarily unavailable", async () => {
+  const window = {};
+  runInNewContext(source, {
+    window,
+    fetch: async () => ({
+      status: 503,
+      headers: { get: () => "text/html; charset=utf-8" }
+    }),
+    AbortController,
+    setTimeout,
+    clearTimeout
+  });
+
+  await assert.rejects(
+    window.requestStudyTask("quiz", { topic: "Biology" }),
+    /Gemini is temporarily unavailable/
   );
 });

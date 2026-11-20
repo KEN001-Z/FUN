@@ -8,7 +8,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const MAX_BODY_BYTES = 200_000;
 const MAX_STUDY_MATERIAL_LENGTH = 24_000;
-const PROVIDER_TIMEOUT_MS = 38_000;
+const PROVIDER_TIMEOUT_MS = 55_000;
 const STUDY_REQUEST_LIMIT = 8;
 const STUDY_REQUEST_WINDOW_MS = 60_000;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-hydrogen";
@@ -73,6 +73,13 @@ const RESPONSE_SCHEMAS = {
 };
 
 class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+class ProviderError extends Error {
   constructor(status, message) {
     super(message);
     this.status = status;
@@ -251,13 +258,16 @@ function validateStudyResult(task, result) {
 }
 
 async function readProviderJson(response, provider) {
+  if (!response.ok) {
+    throw new ProviderError(response.status, `${provider} returned HTTP ${response.status}.`);
+  }
+
   let responseBody;
   try {
     responseBody = await response.json();
   } catch {
     throw new Error(`${provider} returned an unreadable response.`);
   }
-  if (!response.ok) throw new Error(`${provider} returned HTTP ${response.status}.`);
   return responseBody;
 }
 
@@ -276,22 +286,32 @@ async function callGemini(input, apiKey, fetchImpl) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
   try {
-    const response = await fetchImpl(GEMINI_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-        contents: [{ parts: [{ text: createPrompt(input) }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMAS[input.task]
-        }
-      }),
-      signal: controller.signal
-    });
+    let response;
+    try {
+      response = await fetchImpl(GEMINI_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+          contents: [{ parts: [{ text: createPrompt(input) }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: RESPONSE_SCHEMAS[input.task],
+            thinkingConfig: { thinkingLevel: "medium" }
+          }
+        }),
+        signal: controller.signal
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new ProviderError(504, `Gemini request timed out after ${PROVIDER_TIMEOUT_MS / 1000} seconds.`);
+      }
+      throw error;
+    }
+
     const responseBody = await readProviderJson(response, "Gemini");
     const text = responseBody?.candidates?.[0]?.content?.parts
       ?.map((part) => typeof part.text === "string" ? part.text : "")
@@ -314,6 +334,15 @@ export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown Gemini error";
     console.error(`Gemini study request failed for ${input.task}: ${reason}.`);
+    if (error instanceof ProviderError && error.status === 503) {
+      throw new HttpError(503, "Gemini is temporarily unavailable. Please try again shortly.");
+    }
+    if (error instanceof ProviderError && error.status === 429) {
+      throw new HttpError(429, "Gemini rate limit or quota reached. Please try again later or check your Google AI usage limits.");
+    }
+    if (error instanceof ProviderError && error.status === 504) {
+      throw new HttpError(504, "Gemini took too long to respond. Try again with shorter study material.");
+    }
     throw new HttpError(502, "Gemini couldn't complete this study request. Check the Gemini API key, model, quota, and server logs.");
   }
 }
