@@ -32,6 +32,7 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 - `netlify/functions/generate-quiz.js` - Netlify serverless wrapper for the study assistant API
 - `netlify.toml` - Netlify publish and API routing configuration
 - `pxxl.toml` - Pxxl Node.js web-service start command, runtime, and port
+- `package.json` - Node.js start script used by platforms to detect and launch the web service
 - `build.mjs` - copies only public frontend files into the deployment output
 - `.env.example` - names of supported provider secrets; contains no credentials
 - `server.test.mjs` - Node test suite
@@ -116,7 +117,7 @@ Deploy this project as a **Web Service**, not as a static-only site: the Node.js
 If a study request returns `route not found`, the project is likely running as a static site. Switch its Pxxl deployment type to **Web Service**, use the repository folder containing `pxxl.toml` as the project root, and redeploy.
 
 1. Connect the GitHub repository to Pxxl. If the app is in a subfolder, set that folder (for example, `FUN`) as the project base directory so Pxxl reads this `pxxl.toml`.
-2. Confirm the deploy configuration uses `node server.mjs` as the start command and port `3000`. No package installation or build command is needed; this project uses Node built-ins and serves the allow-listed frontend files directly.
+2. Confirm the deploy configuration uses `node server.mjs` as the start command and port `3000`. No external packages or build command are needed; the `package.json` start script lets Pxxl detect and launch the Node.js web service, which uses Node built-ins and serves the allow-listed frontend files directly.
 3. In the Pxxl project dashboard, open **Secrets** and add `GEMINI_API_KEY` and/or `MOONSHOT_API_KEY` (or `KIMI_API_KEY`) as project variables. Add the values privately there, then redeploy so the server can read them.
 4. Open the deployed app and try an AI study task. The server calls Gemini first and falls back to Kimi when both keys are configured. Never put the provider keys in frontend code or commit them.
 
