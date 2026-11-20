@@ -83,7 +83,7 @@ try {
 }
 ```
 
-Then open <http://127.0.0.1:8000>. Keep the server running while using AI features; press Ctrl+C to stop it. The keys are read by the server process and are not saved by this app.
+Then open <http://127.0.0.1:3000>. Keep the server running while using AI features; press Ctrl+C to stop it. The keys are read by the server process and are not saved by this app.
 
 To run the checks:
 

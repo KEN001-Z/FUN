@@ -4,8 +4,8 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)));
-const HOST = process.env.HOST || "127.0.0.1";
-const PORT = Number.parseInt(process.env.PORT || "8000", 10);
+const HOST = process.env.HOST || "0.0.0.0";
+const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const MAX_BODY_BYTES = 200_000;
 const MAX_STUDY_MATERIAL_LENGTH = 24_000;
 const PROVIDER_TIMEOUT_MS = 38_000;
