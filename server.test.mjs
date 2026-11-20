@@ -200,8 +200,15 @@ test("serves the app and reports a missing server key without exposing a key fie
   const baseUrl = `http://127.0.0.1:${address.port}`;
   const page = await fetch(baseUrl);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /href="cbt\.html">Practice<\/a>/);
+  const pageHtml = await page.text();
+  assert.match(pageHtml, /href="cbt\.html">Practice<\/a>/);
+  assert.match(pageHtml, /assistant\.js/);
   assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
+
+  for (const publicFile of ["study-api.js", "assistant.js", "favicon.svg"]) {
+    const response = await fetch(`${baseUrl}/${publicFile}`);
+    assert.equal(response.status, 200, `${publicFile} should be publicly served`);
+  }
 
   const backendSource = await fetch(`${baseUrl}/server.mjs`);
   assert.equal(backendSource.status, 404);

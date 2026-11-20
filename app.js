@@ -92,12 +92,30 @@ class FlashcardApp {
       tutorQuestion: document.querySelector("#tutor-question"),
       assistantResponse: document.querySelector("#assistant-response"),
       assistantResponseTitle: document.querySelector("#assistant-response-title"),
-      assistantResponseContent: document.querySelector("#assistant-response-content")
+      assistantResponseContent: document.querySelector("#assistant-response-content"),
+      statQuizzes: document.querySelector("#stat-quizzes"),
+      statAverage: document.querySelector("#stat-average"),
+      statAverageSuffix: document.querySelector("#stat-average-suffix"),
+      statCards: document.querySelector("#stat-cards"),
+      statStreak: document.querySelector("#stat-streak"),
+      statStreakSuffix: document.querySelector("#stat-streak-suffix"),
+      performanceAverage: document.querySelector("#performance-average"),
+      performanceChart: document.querySelector("#performance-chart"),
+      chartLabels: document.querySelector("#chart-labels"),
+      recommendationTitle: document.querySelector("#recommendation-title"),
+      recommendationCopy: document.querySelector("#recommendation-copy"),
+      recommendationLink: document.querySelector("#recommendation-link"),
+      manualCardForm: document.querySelector("#manual-card-form"),
+      manualQuestion: document.querySelector("#manual-question"),
+      manualAnswer: document.querySelector("#manual-answer"),
+      welcomeGreeting: document.querySelector("#welcome-greeting")
     };
 
     this.bindEvents();
+    this.renderGreeting();
     this.renderPracticeHistory();
     this.render();
+    this.renderDashboardOverview();
   }
 
   bindEvents() {
@@ -111,6 +129,10 @@ class FlashcardApp {
     this.elements.flashcardsButton.addEventListener("click", () => this.runStudyTask("flashcards", this.elements.flashcardsButton));
     this.elements.studyPlanButton.addEventListener("click", () => this.runStudyTask("study_plan", this.elements.studyPlanButton));
     this.elements.tutorButton.addEventListener("click", () => this.runStudyTask("tutor", this.elements.tutorButton));
+    this.elements.manualCardForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.addManualCard();
+    });
     this.elements.fileInput.addEventListener("change", (event) => this.readFile(event));
     document.querySelector("#clear-history-button").addEventListener("click", () => this.clearPracticeHistory());
 
@@ -295,32 +317,7 @@ class FlashcardApp {
   }
 
   async requestStudyTask(task, { topic, material, question }) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 85000);
-    try {
-      const response = await fetch("/api/study-assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task, topic, material, question }),
-        signal: controller.signal
-      });
-      const data = await response.json();
-      if (response.status === 404 && data.error === "route not found") {
-        throw new Error("The study API isn't running. In Pxxl, deploy this project as a Web Service with `node server.mjs` on port 3000, then redeploy.");
-      }
-      if (!response.ok) throw new Error(data.error || `The study service returned HTTP ${response.status}.`);
-      return data;
-    } catch (error) {
-      if (error.name === "AbortError") {
-        throw new Error("The request took too long. Try again with shorter study notes.");
-      }
-      if (error instanceof TypeError) {
-        throw new Error("Couldn't reach Little Loop. Start the app server and try again.");
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
+    return window.requestStudyTask(task, { topic, material, question });
   }
 
   validateQuestions(result) {
@@ -420,6 +417,25 @@ class FlashcardApp {
     this.render();
   }
 
+  addManualCard() {
+    const question = this.elements.manualQuestion.value.trim();
+    const answer = this.elements.manualAnswer.value.trim();
+    if (!question || !answer) {
+      this.showMessage("Add both a question and an answer for your flashcard.");
+      return;
+    }
+    const nextIndex = this.session.cards.length;
+    this.session.cards.push(new Flashcard(question, answer));
+    this.session.index = nextIndex;
+    if (this.deckTitle === "My study deck" && this.elements.topicInput.value.trim()) {
+      this.deckTitle = this.elements.topicInput.value.trim();
+    }
+    this.isFlipped = false;
+    this.elements.manualCardForm.reset();
+    this.render();
+    this.showMessage("Your flashcard was added to the current deck.", true);
+  }
+
   updateSummary() {
     if (this.session.cards.length === 0) {
       this.elements.sessionSummary.textContent = "No cards yet — add study material to begin.";
@@ -441,6 +457,7 @@ class FlashcardApp {
     this.elements.progressLabel.textContent = `${practiced} of ${total} practiced`;
     this.elements.progressBar.setAttribute("aria-valuemax", String(total));
     this.elements.progressBar.setAttribute("aria-valuenow", String(practiced));
+    if (this.elements.statCards) this.elements.statCards.textContent = String(practiced);
   }
 
   renderCard() {
@@ -483,6 +500,7 @@ class FlashcardApp {
   clearPracticeHistory() {
     localStorage.removeItem("little-loop-practice-history");
     this.renderPracticeHistory();
+    this.renderDashboardOverview();
   }
 
   renderPracticeHistory() {
@@ -515,8 +533,11 @@ class FlashcardApp {
 
       item.append(heading, meta);
       if (Array.isArray(attempt.missed) && attempt.missed.length > 0) {
-        const details = document.createElement("div");
+        const details = document.createElement("details");
         details.className = "history-missed-details";
+        const summary = document.createElement("summary");
+        summary.textContent = `Review ${attempt.missed.length} ${attempt.missed.length === 1 ? "question" : "questions"}`;
+        details.append(summary);
         attempt.missed.slice(0, 5).forEach((missedItem) => {
           const card = document.createElement("article");
           card.className = "history-missed-item";
@@ -543,6 +564,106 @@ class FlashcardApp {
       }
       list.append(item);
     });
+  }
+
+  renderDashboardOverview() {
+    const history = this.getPracticeHistory()
+      .filter((attempt) => Number.isInteger(attempt.score) && Number.isInteger(attempt.total) && attempt.total > 0);
+    const count = history.length;
+    const average = count
+      ? Math.round(history.reduce((sum, attempt) => sum + (attempt.score / attempt.total) * 100, 0) / count)
+      : null;
+    this.elements.statQuizzes.textContent = String(count);
+    this.elements.statAverage.textContent = average === null ? "—" : String(average);
+    this.elements.statAverageSuffix.textContent = average === null ? "" : "%";
+    this.elements.performanceAverage.textContent = average === null ? "—" : `${average}%`;
+    this.renderStudyStreak(history);
+    this.renderPerformanceChart(history);
+    this.renderRecommendation(history, average);
+  }
+
+  renderGreeting() {
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    this.elements.welcomeGreeting.textContent = `${greeting}, learner`;
+  }
+
+  renderStudyStreak(history) {
+    const completedDays = new Set(history
+      .map((attempt) => new Date(attempt.completedAt))
+      .filter((date) => !Number.isNaN(date.valueOf()))
+      .map((date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`));
+    const today = new Date();
+    const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (!completedDays.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    let streak = 0;
+    while (completedDays.has(dateKey(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    this.elements.statStreak.textContent = String(streak);
+    this.elements.statStreakSuffix.textContent = streak === 1 ? " day" : " days";
+  }
+
+  renderPerformanceChart(history) {
+    const chart = this.elements.performanceChart;
+    chart.querySelectorAll(".chart-bar-item, .chart-empty").forEach((item) => item.remove());
+    const labels = this.elements.chartLabels;
+    labels.replaceChildren();
+    if (history.length === 0) {
+      chart.setAttribute("aria-label", "No quiz results yet");
+      const empty = document.createElement("p");
+      empty.className = "chart-empty";
+      empty.textContent = "Complete a practice quiz to see your progress here.";
+      chart.append(empty);
+      labels.innerHTML = "<span>Start a quiz</span><span>Your scores will appear here</span>";
+      return;
+    }
+
+    const recent = history.slice(0, 6).reverse();
+    chart.setAttribute("aria-label", `Recent quiz scores: ${recent.map((item) => `${Math.round((item.score / item.total) * 100)} percent`).join(", ")}`);
+    recent.forEach((attempt, index) => {
+      const score = Math.round((attempt.score / attempt.total) * 100);
+      const item = document.createElement("div");
+      item.className = "chart-bar-item";
+      const value = document.createElement("span");
+      value.className = "chart-bar-value";
+      value.textContent = `${score}%`;
+      const bar = document.createElement("span");
+      bar.className = "chart-bar";
+      bar.style.height = `${Math.max(score, 8)}%`;
+      if (index === recent.length - 1) bar.classList.add("is-latest");
+      item.append(value, bar);
+      chart.append(item);
+
+      const label = document.createElement("span");
+      const date = new Date(attempt.completedAt);
+      label.textContent = Number.isNaN(date.valueOf()) ? "Quiz" : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      labels.append(label);
+    });
+  }
+
+  renderRecommendation(history, average) {
+    const first = history[0];
+    if (!first) {
+      this.elements.recommendationTitle.textContent = "Ready for your first practice?";
+      this.elements.recommendationCopy.textContent = "Choose one topic you’re learning and make a short CBT quiz to get started.";
+      this.elements.recommendationLink.textContent = "Create a quiz →";
+      this.elements.recommendationLink.href = "#create";
+      return;
+    }
+    if (average < 70 && Array.isArray(first.missed) && first.missed.length > 0) {
+      this.elements.recommendationTitle.textContent = `Revisit ${first.topic || "your recent quiz"}`;
+      this.elements.recommendationCopy.textContent = `You have ${first.missed.length} ${first.missed.length === 1 ? "question" : "questions"} to review. Try another round when you’re ready.`;
+      this.elements.recommendationLink.textContent = "Practise again →";
+      this.elements.recommendationLink.href = "cbt.html";
+      return;
+    }
+    this.elements.recommendationTitle.textContent = "You’re building good momentum";
+    this.elements.recommendationCopy.textContent = `Your recent average is ${average}%. Keep it going with a quick practice session or a new set of flashcards.`;
+    this.elements.recommendationLink.textContent = "Start a practice →";
+    this.elements.recommendationLink.href = "cbt.html";
   }
 }
 

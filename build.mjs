@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const OUTPUT = resolve(ROOT, "dist");
-const PUBLIC_FILES = ["index.html", "cbt.html", "style.css", "app.js", "cbt.js"];
+const PUBLIC_FILES = ["index.html", "cbt.html", "style.css", "favicon.svg", "study-api.js", "app.js", "cbt.js", "assistant.js"];
 
 await rm(OUTPUT, { recursive: true, force: true });
 await mkdir(OUTPUT, { recursive: true });

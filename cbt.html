@@ -3,23 +3,32 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#eef2ff">
-    <meta name="description" content="A calm, focused place to practice with your own multiple-choice study quiz.">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#f5f6fb">
+    <meta name="description" content="A calm, focused place to practise with your own multiple-choice study quiz.">
     <title>CBT Practice — Little Loop</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="study-api.js" defer></script>
     <script src="cbt.js" defer></script>
+    <script src="assistant.js" defer></script>
   </head>
   <body class="cbt-page">
-    <div class="page-shell">
+    <div class="page-shell cbt-page-shell">
       <header class="topbar">
-        <a class="brand" href="index.html" aria-label="Little Loop home">
+        <a class="brand" href="index.html#dashboard" aria-label="Little Loop home">
           <span class="brand-mark" aria-hidden="true">✳</span>
           <span>little loop<span class="brand-period">.</span></span>
         </a>
-        <div class="topbar-note"><span class="sparkle" aria-hidden="true">✦</span> Your own space to focus</div>
+        <nav class="topbar-nav" aria-label="Main navigation">
+          <a class="topbar-nav-link" href="index.html#dashboard">Home</a>
+          <a class="topbar-nav-link" href="index.html#study">Flashcards</a>
+          <a class="topbar-nav-link is-active" href="cbt.html">Practice</a>
+          <a class="topbar-nav-link" href="index.html#progress">Progress</a>
+        </nav>
         <a class="topbar-link" href="index.html#create">Make a quiz <span aria-hidden="true">↗</span></a>
       </header>
 
@@ -30,80 +39,95 @@
             <h1 id="page-title">Find your <span class="title-highlight">flow.</span></h1>
             <p class="intro-text">One question at a time. Take a breath, trust what you know, and use every answer to learn a little more.</p>
           </div>
-          <div class="cbt-intro-art" aria-hidden="true">
-            <span class="cbt-art-orbit"></span>
-            <span class="cbt-art-spark">✦</span>
-            <span class="cbt-art-check">✓</span>
-            <span class="cbt-art-dot"></span>
-          </div>
+          <a class="cbt-back-link" href="index.html#dashboard"><span aria-hidden="true">←</span> Back to your learning space</a>
         </section>
 
         <section class="cbt-empty panel" id="cbt-empty" aria-labelledby="empty-title">
           <span class="cbt-empty-icon" aria-hidden="true">✳</span>
           <h2 id="empty-title">Your next practice starts here.</h2>
-          <p id="cbt-status">Make a quiz from a topic or your own study notes, then come back here to practice.</p>
+          <p id="cbt-status">Make a quiz from a topic or your own study notes, then come back here to practise.</p>
           <a class="generate-button cbt-empty-link" href="index.html#create">Create a practice quiz <span aria-hidden="true">↗</span></a>
         </section>
 
         <section class="cbt-workspace" id="cbt-workspace" aria-label="CBT practice session" hidden>
-          <div class="cbt-card panel">
-            <div class="cbt-session-heading">
-              <div>
-                <p class="section-kicker">YOUR PRACTICE SESSION</p>
-                <h2 class="cbt-topic" id="cbt-topic">Practice quiz</h2>
+          <div class="exam-column">
+            <div class="exam-overview panel">
+              <div class="cbt-session-heading">
+                <div>
+                  <p class="section-kicker">YOUR PRACTICE SESSION</p>
+                  <h2 class="cbt-topic" id="cbt-topic">Practice quiz</h2>
+                </div>
+                <div class="exam-timer" id="exam-timer" role="timer" aria-label="Time remaining">
+                  <span aria-hidden="true">◷</span><span id="timer-label">10:00</span><small>remaining</small>
+                </div>
               </div>
-              <span class="cbt-session-mark" aria-hidden="true">✦</span>
-            </div>
-
-            <div class="progress-row cbt-progress-row">
-              <div class="progress-track" role="progressbar" id="progress-bar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0">
+              <div class="exam-progress-copy"><span id="exam-progress-label">Question 1 of 6</span><span id="answered-label">0 answered</span></div>
+              <div class="progress-track cbt-progress-row" role="progressbar" id="progress-bar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0">
                 <span id="progress-fill"></span>
               </div>
-              <span class="progress-label" id="progress-label">0 of 6 answered</span>
             </div>
 
-            <div class="cbt-question-card">
-              <div class="quiz-meta">
-                <span class="quiz-question-label">QUESTION <strong id="quiz-count">01 / 06</strong></span>
-                <span class="quiz-score" id="quiz-score">0 correct</span>
-              </div>
-              <h3 class="quiz-question" id="quiz-question"></h3>
-              <div class="quiz-options" id="quiz-options" role="group" aria-label="Answer choices"></div>
-              <div class="quiz-feedback" id="quiz-feedback" aria-live="polite" hidden>
-                <strong id="quiz-feedback-title"></strong>
-                <p id="quiz-explanation"></p>
-              </div>
-              <button class="generate-button quiz-next-button" id="quiz-next-button" type="button" disabled>Choose an answer <span aria-hidden="true">→</span></button>
-              <div class="quiz-complete" id="quiz-complete" hidden>
-                <span class="complete-sparkle" aria-hidden="true">✦</span>
-                <h3 id="quiz-result-title">Nice work!</h3>
-                <p id="quiz-result-copy"></p>
-                <div class="grade-summary" id="grade-summary"></div>
-                <section class="missed-review" id="missed-review" hidden>
-                  <div class="missed-review-heading">
-                    <div>
-                      <p class="section-kicker">YOUR REVIEW NOTES</p>
-                      <h3 id="missed-review-title">Questions to revisit</h3>
-                    </div>
-                    <span id="missed-count"></span>
+            <div class="cbt-card panel">
+              <div class="cbt-question-card">
+                <div class="quiz-meta">
+                  <span class="quiz-question-label">QUESTION <strong id="quiz-count">01 / 06</strong></span>
+                  <span class="review-flag" id="review-flag" hidden>✦ Marked for review</span>
+                </div>
+                <h3 class="quiz-question" id="quiz-question"></h3>
+                <div class="quiz-options" id="quiz-options" role="group" aria-label="Answer choices"></div>
+                <div class="quiz-complete" id="quiz-complete" hidden>
+                  <span class="complete-sparkle" aria-hidden="true">✦</span>
+                  <h3 id="quiz-result-title">Nice work!</h3>
+                  <p id="quiz-result-copy"></p>
+                  <div class="result-stats" aria-label="Your results">
+                    <div><strong id="result-score">0 / 6</strong><span>correct answers</span></div>
+                    <div><strong id="result-percentage">0%</strong><span>final score</span></div>
+                    <div><strong id="result-time">0:00</strong><span>time spent</span></div>
                   </div>
-                  <div id="missed-review-list"></div>
-                </section>
-                <button class="generate-button" id="retry-quiz-button" type="button">Try again <span aria-hidden="true">↻</span></button>
+                  <div class="grade-summary" id="grade-summary"></div>
+                  <section class="missed-review" id="missed-review" hidden>
+                    <div class="missed-review-heading">
+                      <div><p class="section-kicker">YOUR REVIEW NOTES</p><h3 id="missed-review-title">Questions to revisit</h3></div>
+                      <span id="missed-count"></span>
+                    </div>
+                    <div id="missed-review-list"></div>
+                  </section>
+                  <button class="secondary-ai-button review-toggle" id="review-toggle" type="button" aria-expanded="false">Review all answers</button>
+                  <section class="answer-review" id="answer-review" hidden aria-label="All answers"></section>
+                  <div class="result-actions">
+                    <button class="secondary-ai-button" id="new-quiz-button" type="button">Create another quiz</button>
+                    <button class="generate-button" id="retry-quiz-button" type="button">Try again <span aria-hidden="true">↻</span></button>
+                  </div>
+                </div>
               </div>
+              <div class="exam-controls" id="exam-controls">
+                <button class="secondary-ai-button" id="previous-question-button" type="button">← Previous</button>
+                <button class="review-toggle exam-review-button" id="mark-review-button" type="button" aria-pressed="false">☆ Mark for review</button>
+                <div class="exam-next-actions">
+                  <button class="secondary-ai-button" id="next-question-button" type="button">Next →</button>
+                  <button class="generate-button" id="submit-exam-button" type="button">Submit exam</button>
+                </div>
+              </div>
+              <p class="cbt-reassurance"><span aria-hidden="true">♡</span> Take your time. You can move between questions before submitting.</p>
             </div>
-            <p class="cbt-reassurance"><span aria-hidden="true">♡</span> This is practice, not a test. Every question is a chance to learn.</p>
           </div>
 
           <aside class="cbt-guide panel" aria-labelledby="guide-title">
-            <div class="cbt-guide-icon" aria-hidden="true">☼</div>
-            <p class="section-kicker">A NOTE FOR YOU</p>
-            <h2 id="guide-title">No rush. You’re learning as you go.</h2>
-            <p>Choose the answer that feels right. After each question, you’ll see a clear explanation to help the idea stick.</p>
+            <div class="navigator-heading">
+              <div><p class="section-kicker">YOUR EXAM</p><h2 id="guide-title">Question navigator</h2></div>
+              <span class="navigator-total" id="navigator-total">6 questions</span>
+            </div>
+            <p class="navigator-hint">Choose a number to jump to that question.</p>
+            <div class="question-navigation" id="question-navigation" role="group" aria-label="Jump to question"></div>
+            <div class="navigator-legend">
+              <span><i class="legend-dot legend-answered"></i> Answered</span>
+              <span><i class="legend-dot legend-review"></i> Review</span>
+              <span><i class="legend-dot legend-unanswered"></i> Unanswered</span>
+            </div>
             <div class="cbt-guide-divider"></div>
             <div class="cbt-guide-tip">
               <span aria-hidden="true">✧</span>
-              <p><strong>Small steps count.</strong><br>Focus on this question, not the whole deck.</p>
+              <p><strong>Not sure yet?</strong><br>Mark a question for review and come back to it before you submit.</p>
             </div>
           </aside>
         </section>
@@ -113,11 +137,37 @@
           <span>Small steps. Strong memories.</span>
         </footer>
         <nav class="mobile-dock" aria-label="Mobile navigation">
-          <a class="mobile-dock-link" href="index.html" aria-label="Workspace"><span aria-hidden="true">⌂</span><small>Workspace</small></a>
+          <a class="mobile-dock-link" href="index.html#dashboard" aria-label="Dashboard"><span aria-hidden="true">⌂</span><small>Home</small></a>
           <a class="mobile-dock-link" href="index.html#create" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
           <a class="mobile-dock-link is-active" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a>
+          <button class="mobile-dock-link" id="open-assistant-mobile" type="button" aria-label="Ask your AI tutor"><span aria-hidden="true">☼</span><small>AI tutor</small></button>
         </nav>
       </main>
     </div>
+    <section class="assistant-widget" id="assistant-widget" aria-label="AI study assistant">
+      <button class="assistant-launcher" id="assistant-launcher" type="button" aria-expanded="false" aria-controls="assistant-panel" aria-label="Open AI study assistant">
+        <span aria-hidden="true">✦</span><span class="assistant-launcher-label">Ask Little Loop</span>
+      </button>
+      <div class="assistant-panel" id="assistant-panel" aria-labelledby="assistant-title" hidden>
+        <header class="assistant-header">
+          <span class="assistant-avatar" aria-hidden="true">✦</span>
+          <div><strong id="assistant-title">Your study buddy</strong><small><span class="assistant-online-dot"></span> Here to help you learn</small></div>
+          <button class="assistant-close" id="assistant-close" type="button" aria-label="Minimise assistant">−</button>
+        </header>
+        <div class="assistant-messages" id="assistant-messages" aria-live="polite" aria-relevant="additions text">
+          <article class="chat-message chat-ai"><span class="chat-avatar" aria-hidden="true">✦</span><p>Hi there! What are you learning today? I can explain a tricky idea, help with a question, or make a few practice prompts.</p></article>
+        </div>
+        <div class="assistant-prompts" id="assistant-prompts">
+          <button type="button" data-prompt="Explain this topic in simple terms">Explain a topic</button>
+          <button type="button" data-prompt="Give me one practice question about my current topic">Give me a practice question</button>
+        </div>
+        <form class="assistant-form" id="assistant-form">
+          <label class="visually-hidden" for="assistant-input">Ask your study assistant</label>
+          <textarea id="assistant-input" rows="1" maxlength="2000" placeholder="Ask anything about your studies…" required></textarea>
+          <button type="submit" aria-label="Send message">↑</button>
+        </form>
+        <p class="assistant-disclaimer">Little Loop can make mistakes. Check important facts with your course materials.</p>
+      </div>
+    </section>
   </body>
 </html>

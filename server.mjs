@@ -463,7 +463,7 @@ async function handleStaticRequest(request, response, pathname) {
     return;
   }
   const relativePath = decodedPath === "/" ? "index.html" : decodedPath.slice(1);
-  if (!new Set(["index.html", "cbt.html", "style.css", "app.js", "cbt.js"]).has(relativePath)) {
+  if (!new Set(["index.html", "cbt.html", "style.css", "favicon.svg", "study-api.js", "app.js", "cbt.js", "assistant.js"]).has(relativePath)) {
     response.writeHead(404);
     response.end("Not found.");
     return;
