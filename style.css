@@ -1021,21 +1021,22 @@ h1 {
 
   .intro,
   .cbt-intro {
-    min-height: 152px;
-    padding: 22px 2px 18px;
+    min-height: 0;
+    padding: 20px 2px 16px;
   }
 
   h1 {
     max-width: 520px;
-    margin-top: 8px;
-    font-size: clamp(29px, 9vw, 40px);
-    line-height: 1.08;
-    letter-spacing: -1.8px;
+    margin: 7px 0 6px;
+    font-size: clamp(28px, 7.5vw, 34px);
+    line-height: 1.1;
+    letter-spacing: -1.4px;
   }
 
   .intro-text {
     max-width: 520px;
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.55;
   }
 
   .workspace,
@@ -1044,12 +1045,12 @@ h1 {
   }
 
   .create-panel {
-    order: 1;
+    order: 2;
     min-height: 0;
   }
 
   .study-panel {
-    order: 2;
+    order: 1;
   }
 
   .create-panel,
@@ -1101,11 +1102,35 @@ h1 {
   }
 
   .flashcard {
-    min-height: 248px;
+    min-height: 220px;
+  }
+
+  .card-decoration {
+    position: absolute;
+    right: 18px;
+    bottom: 38px;
+    display: block;
+    color: rgba(101, 116, 223, .12);
+    font-size: 52px;
+    line-height: 1;
+  }
+
+  .create-description {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .quiz-question {
+    margin: 16px auto 14px;
+    font-size: clamp(18px, 5vw, 21px);
+  }
+
+  .cbt-question-card .quiz-option {
+    font-size: 13px;
   }
 
   .card-content {
-    font-size: clamp(19px, 6vw, 25px);
+    font-size: clamp(18px, 5vw, 21px);
   }
 
   .study-controls {
@@ -1191,7 +1216,7 @@ h1 {
   }
 
   h1 {
-    font-size: 29px;
+    font-size: 28px;
   }
 
   .create-heading h2,
