@@ -200,7 +200,7 @@ test("serves the app and reports a missing server key without exposing a key fie
   const baseUrl = `http://127.0.0.1:${address.port}`;
   const page = await fetch(baseUrl);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /Go to CBT practice/);
+  assert.match(await page.text(), /href="cbt\.html">Practice<\/a>/);
   assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
 
   const backendSource = await fetch(`${baseUrl}/server.mjs`);

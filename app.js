@@ -298,13 +298,16 @@ class FlashcardApp {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 85000);
     try {
-      const response = await fetch("/api/generate-quiz", {
+      const response = await fetch("/api/study-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task, topic, material, question }),
         signal: controller.signal
       });
       const data = await response.json();
+      if (response.status === 404 && data.error === "route not found") {
+        throw new Error("The study API isn't running. In Pxxl, deploy this project as a Web Service with `node server.mjs` on port 3000, then redeploy.");
+      }
       if (!response.ok) throw new Error(data.error || `The study service returned HTTP ${response.status}.`);
       return data;
     } catch (error) {

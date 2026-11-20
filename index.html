@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f8f7f3">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#eef2ff">
     <title>Little Loop — happy studying</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,22 +19,29 @@
           <span class="brand-mark" aria-hidden="true">✳</span>
           <span>little loop<span class="brand-period">.</span></span>
         </a>
-        <a class="topbar-note home-practice-link" href="cbt.html"><span class="sparkle" aria-hidden="true">✦</span> CBT practice</a>
-        <a class="topbar-link" href="#create">Make a quiz <span aria-hidden="true">↗</span></a>
+        <nav class="topbar-nav" aria-label="Main navigation">
+          <a class="topbar-nav-link is-active" href="index.html">Workspace</a>
+          <a class="topbar-nav-link" href="cbt.html">Practice</a>
+        </nav>
+        <a class="topbar-link" href="#create"><span aria-hidden="true">＋</span> Create set</a>
       </header>
 
       <main>
         <section class="intro" aria-labelledby="page-title">
           <div class="intro-copy">
-            <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR COZY STUDY CORNER</p>
-            <h1 id="page-title">Big ideas, <span class="title-highlight">little loops.</span></h1>
-            <p class="intro-text">Turn a topic, your notes, or a PDF into practice questions, flashcards, a study plan, and clear explanations.</p>
-            <a class="intro-practice-link" href="cbt.html">Go to CBT practice <span aria-hidden="true">↗</span></a>
+            <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR STUDY WORKSPACE</p>
+            <h1 id="page-title">What will you <span class="title-highlight">master today?</span></h1>
+            <p class="intro-text">Turn notes, topics, or PDFs into the right kind of practice—then move forward one focused session at a time.</p>
           </div>
-          <div class="intro-doodle" aria-hidden="true">
-            <span class="doodle-star">✳</span>
-            <span class="doodle-book">📚</span>
-            <span class="doodle-spark">✦</span>
+          <div class="workspace-metrics" aria-label="Workspace overview">
+            <div class="workspace-metric">
+              <span class="metric-icon metric-icon-blue" aria-hidden="true">↗</span>
+              <div><strong>Practice</strong><small>Adaptive quiz</small></div>
+            </div>
+            <div class="workspace-metric">
+              <span class="metric-icon metric-icon-green" aria-hidden="true">▣</span>
+              <div><strong>Remember</strong><small>Smart flashcards</small></div>
+            </div>
           </div>
         </section>
 
@@ -146,6 +154,11 @@
           <span>Made for curious minds <span aria-hidden="true">✿</span></span>
           <span>Small steps. Strong memories.</span>
         </footer>
+        <nav class="mobile-dock" aria-label="Mobile navigation">
+          <a class="mobile-dock-link is-active" href="index.html" aria-label="Workspace"><span aria-hidden="true">⌂</span><small>Workspace</small></a>
+          <a class="mobile-dock-link" href="#create" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
+          <a class="mobile-dock-link" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a>
+        </nav>
       </main>
     </div>
   </body>

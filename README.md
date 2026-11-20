@@ -41,7 +41,7 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 1. The user enters a topic, pastes notes, uploads a PDF/text/Markdown file, or enters a tutor question.
 2. PDF text is extracted in the browser; text and Markdown files are read directly in the browser.
 3. The user chooses CBT quiz, flashcards, study plan, or tutor.
-4. The browser sends only the selected task and relevant topic/material/question to `/api/generate-quiz`, a compatibility route supported by both included deployment configurations.
+4. The browser sends only the selected task and relevant topic/material/question to `/api/study-assistant`.
 5. The server asks Gemini first, validates the structured result, and tries Kimi if Gemini is unavailable or returns invalid data.
 6. The server returns only the validated result to the browser. The browser opens CBT practice, updates the flashcard deck, or displays the tutor response/study plan.
 
@@ -112,6 +112,8 @@ The app applies an 8-request-per-minute in-memory limit per client IP and bounds
 ## Deploy to Pxxl
 
 Deploy this project as a **Web Service**, not as a static-only site: the Node.js server serves the frontend and handles `/api/study-assistant`. The included `pxxl.toml` selects Node.js 24, starts `node server.mjs`, and sets port `3000`. The server honors Pxxl's `PORT` and `HOST` environment variables; locally it continues to bind to `127.0.0.1`.
+
+If a study request returns `route not found`, the project is likely running as a static site. Switch its Pxxl deployment type to **Web Service**, use the repository folder containing `pxxl.toml` as the project root, and redeploy.
 
 1. Connect the GitHub repository to Pxxl. If the app is in a subfolder, set that folder (for example, `FUN`) as the project base directory so Pxxl reads this `pxxl.toml`.
 2. Confirm the deploy configuration uses `node server.mjs` as the start command and port `3000`. No package installation or build command is needed; this project uses Node built-ins and serves the allow-listed frontend files directly.
