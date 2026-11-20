@@ -15,6 +15,7 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 - Server-side Google Gemini integration using structured JSON responses
 - Structured response validation for quizzes, flashcards, tutor answers, and study plans
 - Input limits, duplicate-question/option checks, provider timeouts, and generic error responses that do not expose credentials
+- Study notes up to 200,000 characters, within a 1 MB API request limit
 - Best-effort per-IP throttling (8 requests per minute per warm server/function instance)
 - A server-side static-file allowlist so server source and environment files are never served to browsers
 - Same-origin API requests so the Gemini key remains on the server

@@ -29,6 +29,15 @@ test("validates and trims quiz input", () => {
   assert.throws(() => validateQuizInput({ topic: " ", material: "" }), { status: 400 });
 });
 
+test("accepts study material up to 200,000 characters and rejects larger input", () => {
+  const material = "x".repeat(200_000);
+  assert.equal(validateQuizInput({ topic: "Biology", material }).material.length, 200_000);
+  assert.throws(
+    () => validateQuizInput({ topic: "Biology", material: `${material}x` }),
+    { status: 400 }
+  );
+});
+
 test("limits requests per client and resets after the window", () => {
   let now = 1000;
   const limitRequest = createRateLimiter({ limit: 2, windowMs: 1000, now: () => now });
@@ -64,9 +73,16 @@ test("Netlify function bounds and rate-limits public study requests", async () =
   const tooLarge = await netlifyStudyHandler({
     ...event,
     headers: { "x-nf-client-connection-ip": "198.51.100.56" },
-    body: " ".repeat(200_001)
+    body: " ".repeat(1_000_001)
   });
   assert.equal(tooLarge.statusCode, 413);
+
+  const lengthyMaterial = await netlifyStudyHandler({
+    ...event,
+    headers: { "x-nf-client-connection-ip": "198.51.100.57" },
+    body: JSON.stringify({ task: "unsupported", material: "x".repeat(200_000) })
+  });
+  assert.equal(lengthyMaterial.statusCode, 400);
 });
 
 test("requires the Gemini key and does not rely on a Kimi key", async () => {

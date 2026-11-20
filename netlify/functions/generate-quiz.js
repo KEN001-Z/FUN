@@ -13,7 +13,7 @@ function respond(statusCode, body, extraHeaders = {}) {
   };
 }
 
-const MAX_BODY_BYTES = 200_000;
+const MAX_BODY_BYTES = 1_000_000;
 let rateLimiter;
 
 exports.handler = async (event) => {

@@ -1,6 +1,6 @@
 "use strict";
 
-const MAX_STUDY_MATERIAL_LENGTH = 24000;
+const MAX_STUDY_MATERIAL_LENGTH = 200_000;
 
 class Flashcard {
   constructor(question, answer) {
