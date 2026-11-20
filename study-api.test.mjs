@@ -10,7 +10,7 @@ test("explains when the study endpoint returns HTML instead of JSON", async () =
   runInNewContext(source, {
     window,
     fetch: async () => ({
-      status: 200,
+      status: 502,
       headers: { get: () => "text/html; charset=utf-8" }
     }),
     AbortController,
@@ -20,6 +20,6 @@ test("explains when the study endpoint returns HTML instead of JSON", async () =
 
   await assert.rejects(
     window.requestStudyTask("quiz", { topic: "Biology" }),
-    /non-JSON response \(HTTP 200\).*same deployed service.*Web Service/
+    /HTTP 502.*Pxxl runtime logs.*provider key is valid and active/
   );
 });

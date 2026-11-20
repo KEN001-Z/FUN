@@ -343,14 +343,15 @@ export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
       const result = await callProvider(provider.name, input, provider.key, fetchImpl);
       return validateStudyResult(input.task, result);
     } catch (error) {
-      failedProviders.push(provider.name);
+      const reason = error instanceof Error ? error.message : "Unknown provider error";
+      failedProviders.push(`${provider.name}: ${reason}`);
       if (provider !== providers[providers.length - 1]) {
-        console.warn(`${provider.name} study request failed (${error.name || "Error"}); trying the configured fallback.`);
+        console.warn(`${provider.name} study request failed: ${reason}; trying the configured fallback.`);
       }
     }
   }
 
-  console.error(`Study request failed for ${input.task}; providers failed: ${failedProviders.join(", ")}.`);
+  console.error(`Study request failed for ${input.task}; providers failed: ${failedProviders.join("; ")}.`);
   throw new HttpError(502, "The AI study service couldn't complete this request. Check server configuration and try again.");
 }
 

@@ -12,6 +12,11 @@ window.requestStudyTask = async function requestStudyTask(task, payload, options
     });
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.toLowerCase().includes("application/json")) {
+      if (response.status === 502) {
+        throw new Error(
+          "The study service returned HTTP 502. Check Pxxl runtime logs for AI provider errors, and verify that at least one configured provider key is valid and active."
+        );
+      }
       throw new Error(
         `The study service returned a non-JSON response (HTTP ${response.status}). ` +
         "Check that the page and API use the same deployed service, and that Pxxl is running this project as a Web Service with `node server.mjs` on port 3000."
