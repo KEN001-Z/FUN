@@ -57,8 +57,7 @@ exports.handler = async (event) => {
   try {
     const { generateStudyContent } = await import("../../server.mjs");
     const result = await generateStudyContent(input, {
-      geminiApiKey: process.env.GEMINI_API_KEY,
-      kimiApiKey: process.env.MOONSHOT_API_KEY || process.env.KIMI_API_KEY
+      geminiApiKey: process.env.GEMINI_API_KEY
     });
     return respond(200, result, rateHeaders);
   } catch (error) {

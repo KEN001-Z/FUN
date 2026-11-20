@@ -69,48 +69,60 @@ test("Netlify function bounds and rate-limits public study requests", async () =
   assert.equal(tooLarge.statusCode, 413);
 });
 
-test("uses Kimi when Gemini fails and validates the study response", async () => {
+test("requires the Gemini key and does not rely on a Kimi key", async () => {
   const calls = [];
-  const result = await generateStudyContent(
-    { task: "quiz", topic: "Biology", material: "Cell notes" },
-    { geminiApiKey: "test-gemini-key", kimiApiKey: "test-kimi-key" },
-    async (url, options) => {
-      calls.push({ url, options });
-      if (url.includes("generativelanguage")) {
-        return { ok: false, status: 503, json: async () => ({}) };
+  await assert.rejects(
+    generateStudyContent(
+      { task: "quiz", topic: "Biology" },
+      { kimiApiKey: "test-kimi-key" },
+      async () => {
+        calls.push("unexpected");
       }
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          choices: [{ message: { content: JSON.stringify({ questions: sampleQuestions }) } }]
-        })
-      };
-    }
+    ),
+    { status: 503, message: /GEMINI_API_KEY/ }
   );
+  assert.deepEqual(calls, []);
+});
 
+test("uses only Gemini when its request fails, without falling back to Kimi", async () => {
+  const calls = [];
+  const originalError = console.error;
+  console.error = (message) => calls.push(message);
+  try {
+    await assert.rejects(
+      generateStudyContent(
+        { task: "quiz", topic: "Biology" },
+        { geminiApiKey: "test-gemini-key", kimiApiKey: "test-kimi-key" },
+        async (url) => {
+          calls.push(url);
+          return { ok: false, status: 404, json: async () => ({}) };
+        }
+      ),
+      { status: 502 }
+    );
+  } finally {
+    console.error = originalError;
+  }
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /generativelanguage\.googleapis\.com/);
-  assert.equal(calls[0].options.headers["x-goog-api-key"], "test-gemini-key");
-  assert.match(calls[1].url, /api\.moonshot\.ai\/v1\/chat\/completions/);
-  assert.equal(calls[1].options.headers.Authorization, "Bearer test-kimi-key");
-  assert.equal(JSON.parse(calls[1].options.body).response_format.type, "json_object");
-  assert.equal(result.questions.length, 6);
+  assert.match(calls[0], /generativelanguage\.googleapis\.com/);
+  assert.match(calls[1], /Gemini returned HTTP 404/);
 });
 
 test("generates and validates AI flashcards", async () => {
   const result = await generateStudyContent(
     { task: "flashcards", topic: "Biology", material: "Cell notes" },
-    { kimiApiKey: "test-kimi-key" },
+    { geminiApiKey: "test-gemini-key" },
     async () => ({
       ok: true,
       status: 200,
       json: async () => ({
-        choices: [{
-          message: {
-            content: JSON.stringify({
-              cards: [{ question: " What is a cell? ", answer: " The basic unit of life. " }]
-            })
+        candidates: [{
+          content: {
+            parts: [{
+              text: JSON.stringify({
+                cards: [{ question: " What is a cell? ", answer: " The basic unit of life. " }]
+              })
+            }]
           }
         }]
       })
@@ -122,21 +134,21 @@ test("generates and validates AI flashcards", async () => {
 });
 
 test("generates tutor explanations and study plans", async () => {
-  const kimiResponse = (value) => ({
+  const geminiResponse = (value) => ({
     ok: true,
     status: 200,
     json: async () => ({
-      choices: [{ message: { content: JSON.stringify(value) } }]
+      candidates: [{ content: { parts: [{ text: JSON.stringify(value) }] } }]
     })
   });
   const fetchImpl = async (_url, options) => {
     const request = JSON.parse(options.body);
-    const prompt = request.messages[1].content;
+    const prompt = request.contents[0].parts[0].text;
     return prompt.includes("Student question:")
-      ? kimiResponse({ answer: "A cell is the basic unit of life." })
-      : kimiResponse({ plan: "1. Review notes.\n2. Test yourself.\n3. Review missed ideas." });
+      ? geminiResponse({ answer: "A cell is the basic unit of life." })
+      : geminiResponse({ plan: "1. Review notes.\n2. Test yourself.\n3. Review missed ideas." });
   };
-  const keys = { kimiApiKey: "test-kimi-key" };
+  const keys = { geminiApiKey: "test-gemini-key" };
 
   assert.deepEqual(
     await generateStudyContent({ task: "tutor", question: "What is a cell?" }, keys, fetchImpl),
@@ -179,13 +191,9 @@ test("sends the configured server key and returns validated questions", async ()
 
 test("serves the app and reports a missing server key without exposing a key field", async (context) => {
   const previousKeys = {
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    MOONSHOT_API_KEY: process.env.MOONSHOT_API_KEY,
-    KIMI_API_KEY: process.env.KIMI_API_KEY
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY
   };
   delete process.env.GEMINI_API_KEY;
-  delete process.env.MOONSHOT_API_KEY;
-  delete process.env.KIMI_API_KEY;
 
   const server = createAppServer();
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));

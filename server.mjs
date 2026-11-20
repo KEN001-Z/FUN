@@ -11,10 +11,8 @@ const MAX_STUDY_MATERIAL_LENGTH = 24_000;
 const PROVIDER_TIMEOUT_MS = 38_000;
 const STUDY_REQUEST_LIMIT = 8;
 const STUDY_REQUEST_WINDOW_MS = 60_000;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const KIMI_MODEL = process.env.KIMI_MODEL || "kimi-k3.1-pro-highspeed";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-hydrogen";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const KIMI_URL = "https://api.moonshot.ai/v1/chat/completions";
 
 const CONTENT_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -274,53 +272,31 @@ function parseGeneratedJson(text, provider) {
   }
 }
 
-async function callProvider(provider, input, apiKey, fetchImpl) {
+async function callGemini(input, apiKey, fetchImpl) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
   try {
-    let response;
-    if (provider === "Gemini") {
-      response = await fetchImpl(GEMINI_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-          contents: [{ parts: [{ text: createPrompt(input) }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMAS[input.task]
-          }
-        }),
-        signal: controller.signal
-      });
-      const responseBody = await readProviderJson(response, provider);
-      const text = responseBody?.candidates?.[0]?.content?.parts
-        ?.map((part) => typeof part.text === "string" ? part.text : "")
-        .join("");
-      return parseGeneratedJson(text, provider);
-    }
-
-    response = await fetchImpl(KIMI_URL, {
+    const response = await fetchImpl(GEMINI_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
+        "x-goog-api-key": apiKey
       },
       body: JSON.stringify({
-        model: KIMI_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM_INSTRUCTION },
-          { role: "user", content: createPrompt(input) }
-        ],
-        response_format: { type: "json_object" }
+        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        contents: [{ parts: [{ text: createPrompt(input) }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: RESPONSE_SCHEMAS[input.task]
+        }
       }),
       signal: controller.signal
     });
-    const responseBody = await readProviderJson(response, provider);
-    return parseGeneratedJson(responseBody?.choices?.[0]?.message?.content, provider);
+    const responseBody = await readProviderJson(response, "Gemini");
+    const text = responseBody?.candidates?.[0]?.content?.parts
+      ?.map((part) => typeof part.text === "string" ? part.text : "")
+      .join("");
+    return parseGeneratedJson(text, "Gemini");
   } finally {
     clearTimeout(timeout);
   }
@@ -328,31 +304,18 @@ async function callProvider(provider, input, apiKey, fetchImpl) {
 
 export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
   const input = validateStudyInput(payload);
-  const providers = [
-    { name: "Gemini", key: keys?.geminiApiKey },
-    { name: "Kimi", key: keys?.kimiApiKey }
-  ].filter((provider) => provider.key);
-
-  if (providers.length === 0) {
-    throw new HttpError(503, "AI isn't configured. Set GEMINI_API_KEY and/or MOONSHOT_API_KEY on the server.");
+  if (!keys?.geminiApiKey) {
+    throw new HttpError(503, "AI isn't configured. Set GEMINI_API_KEY on the server.");
   }
 
-  const failedProviders = [];
-  for (const provider of providers) {
-    try {
-      const result = await callProvider(provider.name, input, provider.key, fetchImpl);
-      return validateStudyResult(input.task, result);
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : "Unknown provider error";
-      failedProviders.push(`${provider.name}: ${reason}`);
-      if (provider !== providers[providers.length - 1]) {
-        console.warn(`${provider.name} study request failed: ${reason}; trying the configured fallback.`);
-      }
-    }
+  try {
+    const result = await callGemini(input, keys.geminiApiKey, fetchImpl);
+    return validateStudyResult(input.task, result);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown Gemini error";
+    console.error(`Gemini study request failed for ${input.task}: ${reason}.`);
+    throw new HttpError(502, "Gemini couldn't complete this study request. Check the Gemini API key, model, quota, and server logs.");
   }
-
-  console.error(`Study request failed for ${input.task}; providers failed: ${failedProviders.join("; ")}.`);
-  throw new HttpError(502, "The AI study service couldn't complete this request. Check server configuration and try again.");
 }
 
 export async function generateQuiz(payload, apiKey, fetchImpl = fetch) {
@@ -432,8 +395,7 @@ async function handleStudyRequest(request, response, rateLimiter) {
   try {
     const payload = await readJsonBody(request);
     const result = await generateStudyContent(payload, {
-      geminiApiKey: process.env.GEMINI_API_KEY,
-      kimiApiKey: process.env.MOONSHOT_API_KEY || process.env.KIMI_API_KEY
+      geminiApiKey: process.env.GEMINI_API_KEY
     });
     sendJson(response, 200, result, rateHeaders);
   } catch (error) {
