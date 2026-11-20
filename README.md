@@ -41,7 +41,7 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 1. The user enters a topic, pastes notes, uploads a PDF/text/Markdown file, or enters a tutor question.
 2. PDF text is extracted in the browser; text and Markdown files are read directly in the browser.
 3. The user chooses CBT quiz, flashcards, study plan, or tutor.
-4. The browser sends only the selected task and relevant topic/material/question to `/api/study-assistant`.
+4. The browser sends only the selected task and relevant topic/material/question to `/api/generate-quiz`, a compatibility route supported by both included deployment configurations.
 5. The server asks Gemini first, validates the structured result, and tries Kimi if Gemini is unavailable or returns invalid data.
 6. The server returns only the validated result to the browser. The browser opens CBT practice, updates the flashcard deck, or displays the tutor response/study plan.
 

@@ -298,7 +298,7 @@ class FlashcardApp {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 85000);
     try {
-      const response = await fetch("/api/study-assistant", {
+      const response = await fetch("/api/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task, topic, material, question }),
