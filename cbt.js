@@ -51,6 +51,7 @@ class CbtPracticePage {
       status: document.querySelector("#cbt-status"),
       workspace: document.querySelector("#cbt-workspace"),
       topic: document.querySelector("#cbt-topic"),
+      navigatorTotal: document.querySelector("#navigator-total"),
       progressBar: document.querySelector("#progress-bar"),
       progressFill: document.querySelector("#progress-fill"),
       progressLabel: document.querySelector("#exam-progress-label"),
@@ -120,6 +121,8 @@ class CbtPracticePage {
 
     this.quizSession = new QuizSession(session.questions);
     this.elements.topic.textContent = session.topic || "My practice quiz";
+    this.elements.navigatorTotal.textContent =
+      `${session.questions.length} ${session.questions.length === 1 ? "question" : "questions"}`;
     this.elements.empty.hidden = true;
     this.elements.workspace.hidden = false;
     this.elements.previousButton.addEventListener("click", () => this.moveQuestion(-1));
@@ -141,7 +144,8 @@ class CbtPracticePage {
       && typeof session === "object"
       && typeof session.topic === "string"
       && Array.isArray(session.questions)
-      && session.questions.length === 6
+      && session.questions.length >= 1
+      && session.questions.length <= 100
       && session.questions.every((question) =>
         typeof question?.question === "string"
         && question.question.trim()

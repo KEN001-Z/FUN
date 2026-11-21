@@ -36,6 +36,8 @@
             <label class="field-label material-label" for="material-input">Notes or study guide <span class="optional-label">optional</span></label>
             <textarea id="material-input" class="text-input notes-input" rows="5" placeholder="Paste class notes here for questions tailored to what you're studying…"></textarea>
             <div id="materials"><label class="upload-zone"><span class="upload-icon" aria-hidden="true">↑</span><span><strong>Choose a file</strong> or drop it here</span><span class="upload-types">PDF, plain text, or Markdown · .pdf, .txt, .md</span><input class="visually-hidden" id="file-input" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label></div>
+            <label class="field-label" for="question-count">Questions for your CBT quiz <span class="optional-label">1–100</span></label>
+            <input id="question-count" class="text-input" type="number" min="1" max="100" step="1" value="6" inputmode="numeric">
             <div class="ai-service-note"><span class="ai-service-icon" aria-hidden="true">✦</span><p>AI requests use the secure server-side study service. Your notes are sent only when you choose an activity.</p></div>
             <button class="generate-button" id="generate-button" type="button"><span class="button-label">Make my CBT quiz</span> <span aria-hidden="true">✦</span></button>
             <div class="ai-secondary-actions"><button class="secondary-ai-button" id="flashcards-button" type="button">Make flashcards</button><button class="secondary-ai-button" id="study-plan-button" type="button">Build a study plan</button></div>

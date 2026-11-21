@@ -82,6 +82,7 @@ class FlashcardApp {
       sessionSummary: document.querySelector("#session-summary"),
       topicInput: document.querySelector("#topic-input"),
       materialInput: document.querySelector("#material-input"),
+      questionCountInput: document.querySelector("#question-count"),
       fileInput: document.querySelector("#file-input"),
       formMessage: document.querySelector("#form-message"),
       generateButton: document.querySelector("#generate-button"),
@@ -296,9 +297,15 @@ class FlashcardApp {
     const topic = this.elements.topicInput.value.trim();
     const material = this.elements.materialInput.value.trim();
     const question = this.elements.tutorQuestion.value.trim();
+    const questionCount = task === "quiz" ? Number(this.elements.questionCountInput?.value) : undefined;
     if (task === "tutor" ? !question : !topic && !material) {
       this.showMessage(task === "tutor" ? "Add a question for your study tutor." : "Add a topic or some study material to get started.");
       (task === "tutor" ? this.elements.tutorQuestion : this.elements.topicInput).focus();
+      return;
+    }
+    if (task === "quiz" && (!Number.isInteger(questionCount) || questionCount < 1 || questionCount > 100)) {
+      this.showMessage("Choose between 1 and 100 CBT questions.");
+      this.elements.questionCountInput.focus();
       return;
     }
     if (material.length > MAX_STUDY_MATERIAL_LENGTH) {
@@ -325,10 +332,10 @@ class FlashcardApp {
     }
     this.showMessage("Asking your study buddy…");
     try {
-      const result = await this.requestStudyTask(task, { topic, material, question });
+      const result = await this.requestStudyTask(task, { topic, material, question, questionCount });
       this.elements.assistantResponse.hidden = true;
       if (task === "quiz") {
-        const questions = this.validateQuestions(result);
+        const questions = this.validateQuestions(result, questionCount);
         sessionStorage.setItem("little-loop-practice", JSON.stringify({ topic, questions }));
         window.location.assign("cbt.html");
       } else if (task === "flashcards") {
@@ -360,14 +367,19 @@ class FlashcardApp {
     }
   }
 
-  async requestStudyTask(task, { topic, material, question }) {
-    return window.requestStudyTask(task, { topic, material, question });
+  async requestStudyTask(task, { topic, material, question, questionCount }) {
+    return window.requestStudyTask(task, {
+      topic,
+      material,
+      question,
+      ...(task === "quiz" ? { questionCount } : {})
+    });
   }
 
-  validateQuestions(result) {
+  validateQuestions(result, questionCount) {
     const questions = result?.questions;
-    if (!Array.isArray(questions) || questions.length !== 6) {
-      throw new Error("The AI didn't return all 6 questions. Add more study material or try a narrower topic.");
+    if (!Array.isArray(questions) || questions.length !== questionCount) {
+      throw new Error(`The AI didn't return all ${questionCount} questions. Add more study material or try a narrower topic.`);
     }
     const seenQuestions = new Set();
     const validQuestions = questions.map((question) => {

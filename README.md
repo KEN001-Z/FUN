@@ -6,6 +6,7 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 
 - AI-generated and manually authored flashcards with flip, previous, next, shuffle, "got it," and "again" controls
 - A timed CBT experience with four answer choices, question navigation, review flags, submit confirmation, results review, scoring, and retry
+- User-selectable CBT quiz length from 1 to 100 questions, with the selected count sent to Gemini
 - An AI study tutor that explains a student's question
 - A floating AI study assistant available from the dashboard and CBT page, using the existing server-side tutor endpoint
 - A flexible one-session study plan using active recall, practice, and review

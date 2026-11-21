@@ -12,21 +12,34 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { handler: netlifyStudyHandler } = require("./netlify/functions/generate-quiz.js");
 
-const sampleQuestions = Array.from({ length: 6 }, (_, index) => ({
+const makeQuestions = (count) => Array.from({ length: count }, (_, index) => ({
   question: `Question ${index + 1}?`,
   options: ["Alpha", "Bravo", "Charlie", "Delta"],
   correctAnswerIndex: index % 4,
   explanation: `Explanation ${index + 1}.`
 }));
+const sampleQuestions = makeQuestions(6);
 
 test("validates and trims quiz input", () => {
   assert.deepEqual(validateQuizInput({ topic: "  Biology  ", material: "  Cell notes  " }), {
     task: "quiz",
     topic: "Biology",
     material: "Cell notes",
-    question: ""
+    question: "",
+    questionCount: 6
   });
   assert.throws(() => validateQuizInput({ topic: " ", material: "" }), { status: 400 });
+});
+
+test("validates CBT question counts from 1 through 100", () => {
+  assert.equal(validateQuizInput({ topic: "Biology", questionCount: 1 }).questionCount, 1);
+  assert.equal(validateQuizInput({ topic: "Biology", questionCount: 100 }).questionCount, 100);
+  for (const questionCount of [0, 101, 1.5, "6", null]) {
+    assert.throws(
+      () => validateQuizInput({ topic: "Biology", questionCount }),
+      { status: 400, message: /between 1 and 100/ }
+    );
+  }
 });
 
 test("accepts study material up to 200,000 characters and rejects larger input", () => {
@@ -204,6 +217,34 @@ test("uses Gemini Flash-Lite for long study material without truncating it", asy
   assert.match(capturedUrl, /models\/gemini-3\.5-flash-lite:generateContent/);
   assert.ok(capturedBody.contents[0].parts[0].text.includes(material.trim()));
   assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "medium");
+});
+
+test("generates exactly the requested number of CBT questions", async () => {
+  for (const questionCount of [1, 100]) {
+    let capturedPrompt;
+    const result = await generateStudyContent(
+      { task: "quiz", topic: "Biology", questionCount },
+      { geminiApiKey: "test-gemini-key" },
+      async (_url, options) => {
+        const request = JSON.parse(options.body);
+        capturedPrompt = request.contents[0].parts[0].text;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [{
+              content: {
+                parts: [{ text: JSON.stringify({ questions: makeQuestions(questionCount) }) }]
+              }
+            }]
+          })
+        };
+      }
+    );
+
+    assert.match(capturedPrompt, new RegExp(`Create exactly ${questionCount} `));
+    assert.equal(result.questions.length, questionCount);
+  }
 });
 
 test("generates and validates AI flashcards", async () => {
