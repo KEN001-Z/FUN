@@ -159,6 +159,28 @@ test("reports Gemini unavailability, quota limits, and timeouts with appropriate
   }
 });
 
+test("retries a transient Gemini 503 and succeeds without using another provider", async () => {
+  let calls = 0;
+  const result = await generateStudyContent(
+    { task: "quiz", topic: "Biology" },
+    { geminiApiKey: "test-gemini-key", kimiApiKey: "unused-kimi-key" },
+    async () => {
+      calls += 1;
+      if (calls === 1) return { ok: false, status: 503, json: async () => ({}) };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ questions: sampleQuestions }) }] } }]
+        })
+      };
+    }
+  );
+
+  assert.equal(calls, 2);
+  assert.equal(result.questions.length, 6);
+});
+
 test("generates and validates AI flashcards", async () => {
   const result = await generateStudyContent(
     { task: "flashcards", topic: "Biology", material: "Cell notes" },

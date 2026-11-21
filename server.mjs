@@ -9,6 +9,7 @@ const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 const MAX_BODY_BYTES = 1_000_000;
 const MAX_STUDY_MATERIAL_LENGTH = 200_000;
 const PROVIDER_TIMEOUT_MS = 55_000;
+const GEMINI_RETRY_DELAYS_MS = [500, 1_000];
 const STUDY_REQUEST_LIMIT = 8;
 const STUDY_REQUEST_WINDOW_MS = 60_000;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-hydrogen";
@@ -283,12 +284,18 @@ function parseGeneratedJson(text, provider) {
 }
 
 async function callGemini(input, apiKey, fetchImpl) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
-  try {
-    let response;
+  const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
+  for (let attempt = 0; attempt <= GEMINI_RETRY_DELAYS_MS.length; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      throw new ProviderError(504, `Gemini request timed out after ${PROVIDER_TIMEOUT_MS / 1000} seconds.`);
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), remainingMs);
+    let retryDelay = 0;
     try {
-      response = await fetchImpl(GEMINI_URL, {
+      const response = await fetchImpl(GEMINI_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -305,21 +312,30 @@ async function callGemini(input, apiKey, fetchImpl) {
         }),
         signal: controller.signal
       });
+      const responseBody = await readProviderJson(response, "Gemini");
+      const text = responseBody?.candidates?.[0]?.content?.parts
+        ?.map((part) => typeof part.text === "string" ? part.text : "")
+        .join("");
+      return parseGeneratedJson(text, "Gemini");
     } catch (error) {
       if (error?.name === "AbortError") {
         throw new ProviderError(504, `Gemini request timed out after ${PROVIDER_TIMEOUT_MS / 1000} seconds.`);
       }
-      throw error;
+      if (error instanceof ProviderError && error.status === 503 && attempt < GEMINI_RETRY_DELAYS_MS.length) {
+        retryDelay = GEMINI_RETRY_DELAYS_MS[attempt];
+      } else {
+        throw error;
+      }
+    } finally {
+      clearTimeout(timeout);
     }
 
-    const responseBody = await readProviderJson(response, "Gemini");
-    const text = responseBody?.candidates?.[0]?.content?.parts
-      ?.map((part) => typeof part.text === "string" ? part.text : "")
-      .join("");
-    return parseGeneratedJson(text, "Gemini");
-  } finally {
-    clearTimeout(timeout);
+    if (Date.now() + retryDelay >= deadline) {
+      throw new ProviderError(503, "Gemini is temporarily unavailable.");
+    }
+    await new Promise((resolve) => setTimeout(resolve, retryDelay));
   }
+  throw new ProviderError(503, "Gemini is temporarily unavailable.");
 }
 
 export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
