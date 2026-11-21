@@ -61,6 +61,7 @@ Configure this server-side environment variable:
 - `GEMINI_API_KEY` - Google Gemini API key
 
 The default model is `gemini-4-hydrogen`. You can optionally set `GEMINI_MODEL` to another model available to your API key. Never put API keys in `app.js`, `index.html`, or any committed file, and do not send them in chat.
+For material over 24,000 characters, the server uses Gemini 3.5 Flash-Lite with the same `GEMINI_API_KEY` to reduce processing time; it supports up to 1 million input tokens and structured outputs.
 
 For Netlify, set `GEMINI_API_KEY` as a **Functions runtime environment variable** in the site's secret settings, then redeploy. Do not put secret values in `netlify.toml` or the repository. `.env.example` documents variable names only; the app does not load it automatically.
 

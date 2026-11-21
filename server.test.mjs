@@ -121,7 +121,7 @@ test("uses only Gemini when its request fails, without falling back to Kimi", as
   }
   assert.equal(calls.length, 2);
   assert.match(calls[0], /generativelanguage\.googleapis\.com/);
-  assert.match(calls[1], /Gemini returned HTTP 404/);
+  assert.match(calls[1], /Gemini \(gemini-4-hydrogen\) returned HTTP 404/);
 });
 
 test("reports Gemini unavailability, quota limits, and timeouts with appropriate statuses", async () => {
@@ -179,6 +179,31 @@ test("retries a transient Gemini 503 and succeeds without using another provider
 
   assert.equal(calls, 2);
   assert.equal(result.questions.length, 6);
+});
+
+test("uses Gemini Flash-Lite for long study material without truncating it", async () => {
+  const material = "Long study notes. ".repeat(2_000);
+  let capturedUrl;
+  let capturedBody;
+  await generateStudyContent(
+    { task: "quiz", topic: "Biology", material },
+    { geminiApiKey: "test-gemini-key" },
+    async (url, options) => {
+      capturedUrl = url;
+      capturedBody = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ questions: sampleQuestions }) }] } }]
+        })
+      };
+    }
+  );
+
+  assert.match(capturedUrl, /models\/gemini-3\.5-flash-lite:generateContent/);
+  assert.ok(capturedBody.contents[0].parts[0].text.includes(material.trim()));
+  assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "medium");
 });
 
 test("generates and validates AI flashcards", async () => {

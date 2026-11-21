@@ -13,7 +13,8 @@ const GEMINI_RETRY_DELAYS_MS = [500, 1_000];
 const STUDY_REQUEST_LIMIT = 8;
 const STUDY_REQUEST_WINDOW_MS = 60_000;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-hydrogen";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const LONG_MATERIAL_GEMINI_MODEL = "gemini-3.5-flash-lite";
+const LONG_MATERIAL_THRESHOLD = 24_000;
 
 const CONTENT_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -284,6 +285,10 @@ function parseGeneratedJson(text, provider) {
 }
 
 async function callGemini(input, apiKey, fetchImpl) {
+  const model = input.material.length > LONG_MATERIAL_THRESHOLD
+    ? LONG_MATERIAL_GEMINI_MODEL
+    : GEMINI_MODEL;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
   for (let attempt = 0; attempt <= GEMINI_RETRY_DELAYS_MS.length; attempt += 1) {
     const remainingMs = deadline - Date.now();
@@ -295,7 +300,7 @@ async function callGemini(input, apiKey, fetchImpl) {
     const timeout = setTimeout(() => controller.abort(), remainingMs);
     let retryDelay = 0;
     try {
-      const response = await fetchImpl(GEMINI_URL, {
+      const response = await fetchImpl(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -312,7 +317,7 @@ async function callGemini(input, apiKey, fetchImpl) {
         }),
         signal: controller.signal
       });
-      const responseBody = await readProviderJson(response, "Gemini");
+      const responseBody = await readProviderJson(response, `Gemini (${model})`);
       const text = responseBody?.candidates?.[0]?.content?.parts
         ?.map((part) => typeof part.text === "string" ? part.text : "")
         .join("");
