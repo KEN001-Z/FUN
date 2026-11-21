@@ -327,6 +327,16 @@ test("serves the app and reports a missing server key without exposing a key fie
   assert.equal(practicePage.status, 200);
   assert.match(await practicePage.text(), /Find your/);
 
+  for (const [file, pageTitle] of [
+    ["flashcards.html", /Make it/],
+    ["create.html", /Make learning/],
+    ["progress.html", /Your steady/]
+  ]) {
+    const response = await fetch(`${baseUrl}/${file}`);
+    assert.equal(response.status, 200, `${file} should be publicly served`);
+    assert.match(await response.text(), pageTitle);
+  }
+
   const response = await fetch(`${baseUrl}/api/generate-quiz`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

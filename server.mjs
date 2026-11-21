@@ -476,7 +476,7 @@ async function handleStaticRequest(request, response, pathname) {
     return;
   }
   const relativePath = decodedPath === "/" ? "index.html" : decodedPath.slice(1);
-  if (!new Set(["index.html", "cbt.html", "style.css", "favicon.svg", "study-api.js", "app.js", "cbt.js", "assistant.js"]).has(relativePath)) {
+  if (!new Set(["index.html", "flashcards.html", "create.html", "cbt.html", "progress.html", "style.css", "favicon.svg", "study-api.js", "app.js", "cbt.js", "assistant.js"]).has(relativePath)) {
     response.writeHead(404);
     response.end("Not found.");
     return;
@@ -496,7 +496,7 @@ async function handleStaticRequest(request, response, pathname) {
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",
       "X-Frame-Options": "DENY",
-      "Content-Security-Policy": "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self'; img-src 'self' data:; worker-src 'self' blob: https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self'; font-src 'self' data:; connect-src 'self'; img-src 'self' data:; worker-src 'self' blob: https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
       "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
     });
     response.end(request.method === "HEAD" ? undefined : body);

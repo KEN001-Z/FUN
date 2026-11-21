@@ -26,13 +26,16 @@ Little Loop is a browser-based study app that turns a student's topic or study m
 
 ## Main project files
 
-- `index.html` - learning dashboard, flashcard workspace, and quiz/material creation form
+- `index.html` - learning home page
+- `flashcards.html` - interactive flashcard study page
+- `create.html` - quiz, flashcard, tutor, study-plan, and material creation page
+- `progress.html` - quiz history, score trends, study streak, and recommendations
 - `cbt.html` - timed multiple-choice practice and results page
 - `style.css` - complete visual design and responsive styles
 - `favicon.svg` - Little Loop browser icon
 - `study-api.js` - shared same-origin client for study API requests
 - `assistant.js` - floating chat UI for the server-backed study tutor
-- `app.js` - flashcard interactions, file/PDF loading, AI task controls, and API calls
+- `app.js` - page-aware flashcard interactions, file/PDF loading, AI task controls, and progress rendering
 - `cbt.js` - CBT timer, question navigation, answer review, scoring, and retry
 - `server.mjs` - local HTTP server, study-task validation, and Gemini integration
 - `netlify/functions/generate-quiz.js` - Netlify serverless wrapper for the study assistant API

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#f5f6fb">
+    <meta name="description" content="Review your recent quiz results, study streak and learning progress.">
+    <title>Your Progress — Little Loop</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="Little Loop home"><span class="brand-mark" aria-hidden="true">✳</span><span>little loop<span class="brand-period">.</span></span></a>
+        <nav class="topbar-nav" aria-label="Main navigation">
+          <a class="topbar-nav-link" href="index.html">Home</a><a class="topbar-nav-link" href="flashcards.html">Flashcards</a><a class="topbar-nav-link" href="cbt.html">Practice</a><a class="topbar-nav-link is-active" aria-current="page" href="progress.html">Progress</a>
+        </nav>
+        <a class="topbar-link" href="create.html"><span aria-hidden="true">＋</span> New study set</a>
+      </header>
+      <main>
+        <section class="page-intro" aria-labelledby="page-title">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> NOTICE HOW FAR YOU’VE COME</p>
+          <h1 id="page-title">Your steady <span class="title-highlight">progress.</span></h1>
+          <p class="intro-text">Every practice session is a step forward. Here’s a gentle look at the work you’ve put in.</p>
+        </section>
+        <section class="stats-grid progress-stats" aria-label="Your study statistics">
+          <article class="stat-card stat-lilac"><span class="stat-icon" aria-hidden="true">◎</span><div><p>Quizzes completed</p><strong id="stat-quizzes">0</strong><small>Keep your momentum going</small></div></article>
+          <article class="stat-card stat-mint"><span class="stat-icon" aria-hidden="true">↗</span><div><p>Average score</p><strong><span id="stat-average">—</span><small class="stat-suffix" id="stat-average-suffix"></small></strong><small>Across your practice sessions</small></div></article>
+          <article class="stat-card stat-peach"><span class="stat-icon" aria-hidden="true">▤</span><div><p>Flashcards studied</p><strong id="stat-cards">0</strong><small>In your current study deck</small></div></article>
+          <article class="stat-card stat-sky"><span class="stat-icon" aria-hidden="true">✦</span><div><p>Study streak</p><strong><span id="stat-streak">0</span><small class="stat-suffix" id="stat-streak-suffix"> days</small></strong><small>One day at a time</small></div></article>
+        </section>
+        <section class="progress-page-grid">
+          <article class="panel performance-panel">
+            <div class="section-heading compact-heading"><div><p class="section-kicker">YOUR MOMENTUM</p><h2>Performance</h2></div><span class="performance-mark" aria-hidden="true">↗</span></div>
+            <div class="performance-summary"><strong id="performance-average">—</strong><span>average score</span></div>
+            <div class="performance-chart" id="performance-chart" role="img" aria-label="No quiz results yet"><div class="chart-gridline"></div><div class="chart-gridline"></div><div class="chart-gridline"></div><div class="chart-empty">Complete a practice quiz to see your progress here.</div></div>
+            <div class="chart-labels" id="chart-labels" aria-hidden="true"><span>Start a quiz</span><span>Your scores will appear here</span></div>
+          </article>
+          <article class="panel recommendation-panel">
+            <span class="recommendation-icon" aria-hidden="true">✧</span><p class="section-kicker">A GENTLE NUDGE</p>
+            <h2 id="recommendation-title">Ready for your first practice?</h2>
+            <p id="recommendation-copy">Choose one topic you’re learning and make a short CBT quiz to get started.</p>
+            <a class="recommendation-link" href="create.html" id="recommendation-link">Create a quiz <span aria-hidden="true">→</span></a>
+          </article>
+        </section>
+        <section class="practice-history progress-history" id="practice-history" hidden>
+          <div class="practice-history-heading"><div><p class="section-kicker">KEEP GROWING</p><h2>Recent practice</h2></div><button class="history-clear-button" id="clear-history-button" type="button">Clear history</button></div>
+          <div id="practice-history-list"></div>
+        </section>
+        <footer class="footer"><span>Made for curious minds <span aria-hidden="true">✿</span></span><span>Small steps. Strong memories.</span></footer>
+        <nav class="mobile-dock" aria-label="Mobile navigation">
+          <a class="mobile-dock-link" href="index.html" aria-label="Home"><span aria-hidden="true">⌂</span><small>Home</small></a><a class="mobile-dock-link" href="flashcards.html" aria-label="Flashcards"><span aria-hidden="true">▤</span><small>Cards</small></a><a class="mobile-dock-link" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a><a class="mobile-dock-link is-active" aria-current="page" href="progress.html" aria-label="Progress"><span aria-hidden="true">↗</span><small>Progress</small></a><a class="mobile-dock-link" href="create.html" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
+        </nav>
+      </main>
+    </div>
+  </body>
+</html>

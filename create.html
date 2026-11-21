@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#f5f6fb">
+    <meta name="description" content="Turn your study notes into quizzes, flashcards and focused study plans.">
+    <title>Create a Study Set — Little Loop</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <script src="study-api.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="Little Loop home"><span class="brand-mark" aria-hidden="true">✳</span><span>little loop<span class="brand-period">.</span></span></a>
+        <nav class="topbar-nav" aria-label="Main navigation">
+          <a class="topbar-nav-link" href="index.html">Home</a><a class="topbar-nav-link" href="flashcards.html">Flashcards</a><a class="topbar-nav-link" href="cbt.html">Practice</a><a class="topbar-nav-link" href="progress.html">Progress</a>
+        </nav>
+        <a class="topbar-link is-current" aria-current="page" href="create.html"><span aria-hidden="true">＋</span> New study set</a>
+      </header>
+      <main>
+        <section class="page-intro" aria-labelledby="page-title">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR MATERIALS, MADE MORE USEFUL</p>
+          <h1 id="page-title">Make learning <span class="title-highlight">yours.</span></h1>
+          <p class="intro-text">Add a topic, notes, or a PDF. Choose an activity and your material becomes a focused practice experience.</p>
+        </section>
+        <section class="section-block create-page-content">
+          <aside class="create-panel panel" id="create" aria-labelledby="create-title">
+            <div class="create-heading"><span class="create-icon" aria-hidden="true">✎</span><div><p class="section-kicker">MAKE IT YOURS</p><h2 id="create-title">Create study materials</h2></div></div>
+            <p class="create-description">Little Loop can turn your material into a CBT quiz, flashcards, a study plan, or a clear explanation.</p>
+            <label class="field-label" for="topic-input">Your topic</label>
+            <input id="topic-input" class="text-input" type="text" maxlength="120" placeholder="e.g. Photosynthesis, World War II">
+            <label class="field-label material-label" for="material-input">Notes or study guide <span class="optional-label">optional</span></label>
+            <textarea id="material-input" class="text-input notes-input" rows="5" placeholder="Paste class notes here for questions tailored to what you're studying…"></textarea>
+            <div id="materials"><label class="upload-zone"><span class="upload-icon" aria-hidden="true">↑</span><span><strong>Choose a file</strong> or drop it here</span><span class="upload-types">PDF, plain text, or Markdown · .pdf, .txt, .md</span><input class="visually-hidden" id="file-input" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"></label></div>
+            <div class="ai-service-note"><span class="ai-service-icon" aria-hidden="true">✦</span><p>AI requests use the secure server-side study service. Your notes are sent only when you choose an activity.</p></div>
+            <button class="generate-button" id="generate-button" type="button"><span class="button-label">Make my CBT quiz</span> <span aria-hidden="true">✦</span></button>
+            <div class="ai-secondary-actions"><button class="secondary-ai-button" id="flashcards-button" type="button">Make flashcards</button><button class="secondary-ai-button" id="study-plan-button" type="button">Build a study plan</button></div>
+            <details class="manual-card-editor" id="manual-card">
+              <summary>Create a flashcard manually</summary>
+              <form id="manual-card-form">
+                <label class="field-label" for="manual-question">Question</label><textarea class="text-input manual-card-input" id="manual-question" rows="2" maxlength="1000" placeholder="Write a question to help you remember…" required></textarea>
+                <label class="field-label" for="manual-answer">Answer</label><textarea class="text-input manual-card-input" id="manual-answer" rows="2" maxlength="1000" placeholder="Add a short answer or explanation…" required></textarea>
+                <button class="secondary-ai-button" type="submit">Add to my deck</button>
+              </form>
+            </details>
+            <div class="tutor-box"><label class="field-label" for="tutor-question">Ask your study tutor</label><textarea class="text-input tutor-input" id="tutor-question" rows="2" maxlength="2000" placeholder="What would you like explained?"></textarea><button class="secondary-ai-button tutor-button" id="tutor-button" type="button">Explain this to me</button></div>
+            <section class="assistant-response" id="assistant-response" aria-live="polite" hidden><h3 id="assistant-response-title"></h3><p id="assistant-response-content"></p></section>
+            <p class="privacy-note"><span aria-hidden="true">♡</span> PDF text is extracted in your browser before you request a study activity.</p>
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+          </aside>
+        </section>
+        <footer class="footer"><span>Made for curious minds <span aria-hidden="true">✿</span></span><span>Small steps. Strong memories.</span></footer>
+        <nav class="mobile-dock" aria-label="Mobile navigation">
+          <a class="mobile-dock-link" href="index.html" aria-label="Home"><span aria-hidden="true">⌂</span><small>Home</small></a><a class="mobile-dock-link" href="flashcards.html" aria-label="Flashcards"><span aria-hidden="true">▤</span><small>Cards</small></a><a class="mobile-dock-link" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a><a class="mobile-dock-link" href="progress.html" aria-label="Progress"><span aria-hidden="true">↗</span><small>Progress</small></a><a class="mobile-dock-link is-active" aria-current="page" href="create.html" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
+        </nav>
+      </main>
+    </div>
+  </body>
+</html>

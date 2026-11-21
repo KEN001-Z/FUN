@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#f5f6fb">
+    <meta name="description" content="Practise your study deck with focused, interactive flashcards.">
+    <title>Flashcards — Little Loop</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="Little Loop home"><span class="brand-mark" aria-hidden="true">✳</span><span>little loop<span class="brand-period">.</span></span></a>
+        <nav class="topbar-nav" aria-label="Main navigation">
+          <a class="topbar-nav-link" href="index.html">Home</a><a class="topbar-nav-link is-active" aria-current="page" href="flashcards.html">Flashcards</a><a class="topbar-nav-link" href="cbt.html">Practice</a><a class="topbar-nav-link" href="progress.html">Progress</a>
+        </nav>
+        <a class="topbar-link" href="create.html"><span aria-hidden="true">＋</span> New study set</a>
+      </header>
+      <main>
+        <section class="page-intro" aria-labelledby="page-title">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> ONE CARD AT A TIME</p>
+          <h1 id="page-title">Make it <span class="title-highlight">stick.</span></h1>
+          <p class="intro-text">Use active recall to strengthen what you know. Take your time, and come back to a card whenever you need.</p>
+        </section>
+        <section class="section-block flashcards-page-content" aria-labelledby="flashcards-title">
+          <div class="section-heading">
+            <div><p class="section-kicker">YOUR STUDY DECK</p><h2 id="flashcards-title">Ready when you are</h2></div>
+            <a class="text-link" href="create.html">Create flashcards <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="study-panel panel">
+            <div class="panel-heading">
+              <div><p class="section-kicker" id="study-kicker">YOUR FLASHCARDS</p><h2 id="deck-title">My study deck</h2></div>
+              <button class="icon-button shuffle-button" id="shuffle-button" type="button" aria-label="Shuffle flashcards" title="Shuffle cards"><span aria-hidden="true">⤨</span></button>
+            </div>
+            <div class="progress-row">
+              <div class="progress-track" role="progressbar" id="progress-bar" aria-label="Deck progress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-fill"></span></div>
+              <span class="progress-label" id="progress-label">0 of 0 practiced</span>
+            </div>
+            <div class="card-stage">
+              <button class="flashcard" id="flashcard" type="button" aria-label="Flashcard. Press to reveal the answer.">
+                <span class="card-topline"><span class="card-tag" id="card-tag">QUICK QUESTION</span><span class="card-count" id="card-count">00 / 00</span></span>
+                <span class="card-content" id="card-content" aria-live="polite"></span>
+                <span class="card-hint" id="card-hint">tap anywhere to flip <span aria-hidden="true">↗</span></span>
+                <span class="card-decoration" aria-hidden="true">✳</span>
+              </button>
+            </div>
+            <div class="study-controls">
+              <button class="nav-button" id="previous-button" type="button" aria-label="Previous card" title="Previous card (←)">←</button>
+              <button class="answer-button practice-button" id="practice-button" type="button"><span aria-hidden="true">↻</span> Again</button>
+              <button class="answer-button know-button" id="know-button" type="button">Got it <span aria-hidden="true">✓</span></button>
+              <button class="nav-button" id="next-button" type="button" aria-label="Next card" title="Next card (→)">→</button>
+            </div>
+            <p class="keyboard-hint">Tip: use <kbd>space</kbd> to flip and <kbd>←</kbd> <kbd>→</kbd> to move</p>
+            <div class="session-summary" id="session-summary" aria-live="polite"></div>
+          </div>
+          <div class="flashcards-empty-note panel"><span class="recommendation-icon" aria-hidden="true">✧</span><p>Your deck is saved for this browser tab. Make a new set or add your own cards any time.</p><a class="recommendation-link" href="create.html">Build a deck <span aria-hidden="true">→</span></a></div>
+        </section>
+        <footer class="footer"><span>Made for curious minds <span aria-hidden="true">✿</span></span><span>Small steps. Strong memories.</span></footer>
+        <nav class="mobile-dock" aria-label="Mobile navigation">
+          <a class="mobile-dock-link" href="index.html" aria-label="Home"><span aria-hidden="true">⌂</span><small>Home</small></a><a class="mobile-dock-link is-active" aria-current="page" href="flashcards.html" aria-label="Flashcards"><span aria-hidden="true">▤</span><small>Cards</small></a><a class="mobile-dock-link" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a><a class="mobile-dock-link" href="progress.html" aria-label="Progress"><span aria-hidden="true">↗</span><small>Progress</small></a><a class="mobile-dock-link" href="create.html" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
+        </nav>
+      </main>
+    </div>
+  </body>
+</html>

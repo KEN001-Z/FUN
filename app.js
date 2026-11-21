@@ -111,6 +111,7 @@ class FlashcardApp {
       welcomeGreeting: document.querySelector("#welcome-greeting")
     };
 
+    this.restoreDeck();
     this.bindEvents();
     this.renderGreeting();
     this.renderPracticeHistory();
@@ -118,56 +119,98 @@ class FlashcardApp {
     this.renderDashboardOverview();
   }
 
+  restoreDeck() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("little-loop-flashcards") || "null");
+      if (!Array.isArray(saved?.cards)) return;
+      const cards = saved.cards.filter((card) =>
+        typeof card?.question === "string" && typeof card?.answer === "string"
+      );
+      this.session = new StudySession(cards.map((card) => new Flashcard(card.question, card.answer)));
+      this.deckTitle = typeof saved.title === "string" ? saved.title : this.deckTitle;
+      const restoreSet = (indices) => new Set(
+        Array.isArray(indices)
+          ? indices.filter((index) => Number.isInteger(index) && index >= 0 && index < cards.length).map((index) => this.session.cards[index])
+          : []
+      );
+      this.session.practiced = restoreSet(saved.practiced);
+      this.session.known = restoreSet(saved.known);
+    } catch (error) {
+      console.warn("Couldn't restore the current flashcard deck.", error);
+    }
+  }
+
+  saveDeck() {
+    sessionStorage.setItem("little-loop-flashcards", JSON.stringify({
+      title: this.deckTitle,
+      cards: this.session.cards.map(({ question, answer }) => ({ question, answer })),
+      practiced: this.session.cards
+        .map((card, index) => this.session.practiced.has(card) ? index : -1)
+        .filter((index) => index >= 0),
+      known: this.session.cards
+        .map((card, index) => this.session.known.has(card) ? index : -1)
+        .filter((index) => index >= 0)
+    }));
+  }
+
   bindEvents() {
-    this.elements.card.addEventListener("click", () => this.flipCard());
-    document.querySelector("#previous-button").addEventListener("click", () => this.movePrevious());
-    document.querySelector("#next-button").addEventListener("click", () => this.moveNext());
-    document.querySelector("#know-button").addEventListener("click", () => this.markKnown());
-    document.querySelector("#practice-button").addEventListener("click", () => this.markForPractice());
-    document.querySelector("#shuffle-button").addEventListener("click", () => this.shuffle());
-    this.elements.generateButton.addEventListener("click", () => this.runStudyTask("quiz", this.elements.generateButton));
-    this.elements.flashcardsButton.addEventListener("click", () => this.runStudyTask("flashcards", this.elements.flashcardsButton));
-    this.elements.studyPlanButton.addEventListener("click", () => this.runStudyTask("study_plan", this.elements.studyPlanButton));
-    this.elements.tutorButton.addEventListener("click", () => this.runStudyTask("tutor", this.elements.tutorButton));
-    this.elements.manualCardForm.addEventListener("submit", (event) => {
+    const on = (selector, eventName, handler) => {
+      document.querySelector(selector)?.addEventListener(eventName, handler);
+    };
+    this.elements.card?.addEventListener("click", () => this.flipCard());
+    on("#previous-button", "click", () => this.movePrevious());
+    on("#next-button", "click", () => this.moveNext());
+    on("#know-button", "click", () => this.markKnown());
+    on("#practice-button", "click", () => this.markForPractice());
+    on("#shuffle-button", "click", () => this.shuffle());
+    if (this.elements.generateButton) {
+      this.elements.generateButton.addEventListener("click", () => this.runStudyTask("quiz", this.elements.generateButton));
+      this.elements.flashcardsButton?.addEventListener("click", () => this.runStudyTask("flashcards", this.elements.flashcardsButton));
+      this.elements.studyPlanButton?.addEventListener("click", () => this.runStudyTask("study_plan", this.elements.studyPlanButton));
+      this.elements.tutorButton?.addEventListener("click", () => this.runStudyTask("tutor", this.elements.tutorButton));
+    }
+    this.elements.manualCardForm?.addEventListener("submit", (event) => {
       event.preventDefault();
       this.addManualCard();
     });
-    this.elements.fileInput.addEventListener("change", (event) => this.readFile(event));
-    document.querySelector("#clear-history-button").addEventListener("click", () => this.clearPracticeHistory());
-
+    this.elements.fileInput?.addEventListener("change", (event) => this.readFile(event));
+    on("#clear-history-button", "click", () => this.clearPracticeHistory());
     const uploadZone = document.querySelector(".upload-zone");
-    for (const eventName of ["dragenter", "dragover"]) {
-      uploadZone.addEventListener(eventName, (event) => {
-        event.preventDefault();
-        uploadZone.classList.add("is-dragging");
-      });
+    if (uploadZone) {
+      for (const eventName of ["dragenter", "dragover"]) {
+        uploadZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          uploadZone.classList.add("is-dragging");
+        });
+      }
+      for (const eventName of ["dragleave", "drop"]) {
+        uploadZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          uploadZone.classList.remove("is-dragging");
+        });
+      }
+      uploadZone.addEventListener("drop", (event) => this.readDroppedFile(event));
     }
-    for (const eventName of ["dragleave", "drop"]) {
-      uploadZone.addEventListener(eventName, (event) => {
-        event.preventDefault();
-        uploadZone.classList.remove("is-dragging");
-      });
-    }
-    uploadZone.addEventListener("drop", (event) => this.readDroppedFile(event));
 
-    document.addEventListener("keydown", (event) => {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.code === "Space" && event.target === this.elements.card) {
-        event.preventDefault();
-        this.flipCard();
-        return;
-      }
-      if (this.isTyping(event.target)) return;
-      if (event.code === "Space") {
-        event.preventDefault();
-        this.flipCard();
-      } else if (event.key === "ArrowRight") {
-        this.moveNext();
-      } else if (event.key === "ArrowLeft") {
-        this.movePrevious();
-      }
-    });
+    if (this.elements.card) {
+      document.addEventListener("keydown", (event) => {
+        if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.code === "Space" && event.target === this.elements.card) {
+          event.preventDefault();
+          this.flipCard();
+          return;
+        }
+        if (this.isTyping(event.target)) return;
+        if (event.code === "Space") {
+          event.preventDefault();
+          this.flipCard();
+        } else if (event.key === "ArrowRight") {
+          this.moveNext();
+        } else if (event.key === "ArrowLeft") {
+          this.movePrevious();
+        }
+      });
+    }
   }
 
   isTyping(target) {
@@ -293,8 +336,9 @@ class FlashcardApp {
         this.session = new StudySession(cards.map((card) => new Flashcard(card.question, card.answer)));
         this.deckTitle = topic || "My flashcards";
         this.isFlipped = false;
-        this.elements.sessionSummary.textContent = "";
-        this.render();
+        this.saveDeck();
+        if (this.elements.sessionSummary) this.elements.sessionSummary.textContent = "";
+        window.location.assign("flashcards.html");
         this.showMessage(`${cards.length} flashcards are ready to study.`, true);
       } else if (task === "tutor") {
         this.showAssistantResponse("Your study tutor", result.answer);
@@ -397,6 +441,7 @@ class FlashcardApp {
     if (this.session.cards.length === 0) return;
     this.session.markKnown();
     this.isFlipped = false;
+    this.saveDeck();
     this.updateSummary();
     this.render();
   }
@@ -405,6 +450,7 @@ class FlashcardApp {
     if (this.session.cards.length === 0) return;
     this.session.markForPractice();
     this.isFlipped = false;
+    this.saveDeck();
     this.updateSummary();
     this.render();
   }
@@ -413,7 +459,8 @@ class FlashcardApp {
     if (this.session.cards.length === 0) return;
     this.session.shuffle();
     this.isFlipped = false;
-    this.elements.sessionSummary.textContent = "";
+    this.saveDeck();
+    if (this.elements.sessionSummary) this.elements.sessionSummary.textContent = "";
     this.render();
   }
 
@@ -431,12 +478,14 @@ class FlashcardApp {
       this.deckTitle = this.elements.topicInput.value.trim();
     }
     this.isFlipped = false;
+    this.saveDeck();
     this.elements.manualCardForm.reset();
     this.render();
     this.showMessage("Your flashcard was added to the current deck.", true);
   }
 
   updateSummary() {
+    if (!this.elements.sessionSummary) return;
     if (this.session.cards.length === 0) {
       this.elements.sessionSummary.textContent = "No cards yet — add study material to begin.";
       return;
@@ -448,19 +497,20 @@ class FlashcardApp {
   }
 
   render() {
-    this.elements.deckTitle.textContent = this.deckTitle;
+    if (this.elements.deckTitle) this.elements.deckTitle.textContent = this.deckTitle;
     this.renderCard();
     const total = this.session.cards.length;
     const practiced = this.session.practicedCount;
     const progressPercent = total === 0 ? 0 : (practiced / total) * 100;
-    this.elements.progressFill.style.width = `${progressPercent}%`;
-    this.elements.progressLabel.textContent = `${practiced} of ${total} practiced`;
-    this.elements.progressBar.setAttribute("aria-valuemax", String(total));
-    this.elements.progressBar.setAttribute("aria-valuenow", String(practiced));
+    if (this.elements.progressFill) this.elements.progressFill.style.width = `${progressPercent}%`;
+    if (this.elements.progressLabel) this.elements.progressLabel.textContent = `${practiced} of ${total} practiced`;
+    this.elements.progressBar?.setAttribute("aria-valuemax", String(total));
+    this.elements.progressBar?.setAttribute("aria-valuenow", String(practiced));
     if (this.elements.statCards) this.elements.statCards.textContent = String(practiced);
   }
 
   renderCard() {
+    if (!this.elements.card) return;
     const total = this.session.cards.length;
     if (total === 0) {
       this.elements.cardContent.textContent = "No flashcards yet";
@@ -484,6 +534,7 @@ class FlashcardApp {
   }
 
   showMessage(message, isSuccess = false) {
+    if (!this.elements.formMessage) return;
     this.elements.formMessage.textContent = message;
     this.elements.formMessage.classList.toggle("success", isSuccess);
   }
@@ -507,6 +558,7 @@ class FlashcardApp {
     const history = this.getPracticeHistory();
     const section = document.querySelector("#practice-history");
     const list = document.querySelector("#practice-history-list");
+    if (!section || !list) return;
     section.hidden = history.length === 0;
     list.replaceChildren();
 
@@ -573,16 +625,17 @@ class FlashcardApp {
     const average = count
       ? Math.round(history.reduce((sum, attempt) => sum + (attempt.score / attempt.total) * 100, 0) / count)
       : null;
-    this.elements.statQuizzes.textContent = String(count);
-    this.elements.statAverage.textContent = average === null ? "—" : String(average);
-    this.elements.statAverageSuffix.textContent = average === null ? "" : "%";
-    this.elements.performanceAverage.textContent = average === null ? "—" : `${average}%`;
+    if (this.elements.statQuizzes) this.elements.statQuizzes.textContent = String(count);
+    if (this.elements.statAverage) this.elements.statAverage.textContent = average === null ? "—" : String(average);
+    if (this.elements.statAverageSuffix) this.elements.statAverageSuffix.textContent = average === null ? "" : "%";
+    if (this.elements.performanceAverage) this.elements.performanceAverage.textContent = average === null ? "—" : `${average}%`;
     this.renderStudyStreak(history);
     this.renderPerformanceChart(history);
     this.renderRecommendation(history, average);
   }
 
   renderGreeting() {
+    if (!this.elements.welcomeGreeting) return;
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     this.elements.welcomeGreeting.textContent = `${greeting}, learner`;
@@ -602,12 +655,13 @@ class FlashcardApp {
       streak += 1;
       cursor.setDate(cursor.getDate() - 1);
     }
-    this.elements.statStreak.textContent = String(streak);
-    this.elements.statStreakSuffix.textContent = streak === 1 ? " day" : " days";
+    if (this.elements.statStreak) this.elements.statStreak.textContent = String(streak);
+    if (this.elements.statStreakSuffix) this.elements.statStreakSuffix.textContent = streak === 1 ? " day" : " days";
   }
 
   renderPerformanceChart(history) {
     const chart = this.elements.performanceChart;
+    if (!chart) return;
     chart.querySelectorAll(".chart-bar-item, .chart-empty").forEach((item) => item.remove());
     const labels = this.elements.chartLabels;
     labels.replaceChildren();
@@ -645,12 +699,13 @@ class FlashcardApp {
   }
 
   renderRecommendation(history, average) {
+    if (!this.elements.recommendationTitle || !this.elements.recommendationCopy || !this.elements.recommendationLink) return;
     const first = history[0];
     if (!first) {
       this.elements.recommendationTitle.textContent = "Ready for your first practice?";
       this.elements.recommendationCopy.textContent = "Choose one topic you’re learning and make a short CBT quiz to get started.";
       this.elements.recommendationLink.textContent = "Create a quiz →";
-      this.elements.recommendationLink.href = "#create";
+      this.elements.recommendationLink.href = "create.html";
       return;
     }
     if (average < 70 && Array.isArray(first.missed) && first.missed.length > 0) {

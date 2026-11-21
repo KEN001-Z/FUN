@@ -8,9 +8,6 @@
     <meta name="description" content="A calm, focused place to practise with your own multiple-choice study quiz.">
     <title>CBT Practice — Little Loop</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="study-api.js" defer></script>
     <script src="cbt.js" defer></script>
@@ -19,17 +16,17 @@
   <body class="cbt-page">
     <div class="page-shell cbt-page-shell">
       <header class="topbar">
-        <a class="brand" href="index.html#dashboard" aria-label="Little Loop home">
+        <a class="brand" href="index.html" aria-label="Little Loop home">
           <span class="brand-mark" aria-hidden="true">✳</span>
           <span>little loop<span class="brand-period">.</span></span>
         </a>
         <nav class="topbar-nav" aria-label="Main navigation">
-          <a class="topbar-nav-link" href="index.html#dashboard">Home</a>
-          <a class="topbar-nav-link" href="index.html#study">Flashcards</a>
-          <a class="topbar-nav-link is-active" href="cbt.html">Practice</a>
-          <a class="topbar-nav-link" href="index.html#progress">Progress</a>
+          <a class="topbar-nav-link" href="index.html">Home</a>
+          <a class="topbar-nav-link" href="flashcards.html">Flashcards</a>
+          <a class="topbar-nav-link is-active" aria-current="page" href="cbt.html">Practice</a>
+          <a class="topbar-nav-link" href="progress.html">Progress</a>
         </nav>
-        <a class="topbar-link" href="index.html#create">Make a quiz <span aria-hidden="true">↗</span></a>
+        <a class="topbar-link" href="create.html">Make a quiz <span aria-hidden="true">↗</span></a>
       </header>
 
       <main>
@@ -39,14 +36,14 @@
             <h1 id="page-title">Find your <span class="title-highlight">flow.</span></h1>
             <p class="intro-text">One question at a time. Take a breath, trust what you know, and use every answer to learn a little more.</p>
           </div>
-          <a class="cbt-back-link" href="index.html#dashboard"><span aria-hidden="true">←</span> Back to your learning space</a>
+          <a class="cbt-back-link" href="index.html"><span aria-hidden="true">←</span> Back to your learning space</a>
         </section>
 
         <section class="cbt-empty panel" id="cbt-empty" aria-labelledby="empty-title">
           <span class="cbt-empty-icon" aria-hidden="true">✳</span>
           <h2 id="empty-title">Your next practice starts here.</h2>
           <p id="cbt-status">Make a quiz from a topic or your own study notes, then come back here to practise.</p>
-          <a class="generate-button cbt-empty-link" href="index.html#create">Create a practice quiz <span aria-hidden="true">↗</span></a>
+          <a class="generate-button cbt-empty-link" href="create.html">Create a practice quiz <span aria-hidden="true">↗</span></a>
         </section>
 
         <section class="cbt-workspace" id="cbt-workspace" aria-label="CBT practice session" hidden>
@@ -137,10 +134,11 @@
           <span>Small steps. Strong memories.</span>
         </footer>
         <nav class="mobile-dock" aria-label="Mobile navigation">
-          <a class="mobile-dock-link" href="index.html#dashboard" aria-label="Dashboard"><span aria-hidden="true">⌂</span><small>Home</small></a>
-          <a class="mobile-dock-link" href="index.html#create" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
-          <a class="mobile-dock-link is-active" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a>
-          <button class="mobile-dock-link" id="open-assistant-mobile" type="button" aria-label="Ask your AI tutor"><span aria-hidden="true">☼</span><small>AI tutor</small></button>
+          <a class="mobile-dock-link" href="index.html" aria-label="Home"><span aria-hidden="true">⌂</span><small>Home</small></a>
+          <a class="mobile-dock-link" href="flashcards.html" aria-label="Flashcards"><span aria-hidden="true">▤</span><small>Cards</small></a>
+          <a class="mobile-dock-link is-active" aria-current="page" href="cbt.html" aria-label="Practice"><span aria-hidden="true">◎</span><small>Practice</small></a>
+          <a class="mobile-dock-link" href="progress.html" aria-label="Progress"><span aria-hidden="true">↗</span><small>Progress</small></a>
+          <a class="mobile-dock-link" href="create.html" aria-label="Create study set"><span aria-hidden="true">＋</span><small>Create</small></a>
         </nav>
       </main>
     </div>

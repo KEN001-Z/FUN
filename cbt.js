@@ -130,7 +130,7 @@ class CbtPracticePage {
     });
     this.elements.submitButton.addEventListener("click", () => this.confirmSubmit());
     this.elements.retryButton.addEventListener("click", () => this.retry());
-    this.elements.newQuizButton.addEventListener("click", () => window.location.assign("index.html#create"));
+    this.elements.newQuizButton.addEventListener("click", () => window.location.assign("create.html"));
     this.elements.reviewToggle.addEventListener("click", () => this.toggleAnswerReview());
     this.startTimer();
     this.render();
