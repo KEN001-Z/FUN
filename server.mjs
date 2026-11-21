@@ -15,6 +15,8 @@ const STUDY_REQUEST_WINDOW_MS = 60_000;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-hydrogen";
 const LONG_MATERIAL_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const LONG_MATERIAL_THRESHOLD = 24_000;
+const LONG_QUIZ_SECTION_CHAR_LIMIT = 36_000;
+const LONG_QUIZ_MAX_PARALLEL_REQUESTS = 6;
 
 const CONTENT_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -293,8 +295,59 @@ function parseGeneratedJson(text, provider) {
   }
 }
 
-async function callGemini(input, apiKey, fetchImpl) {
-  const isLongMaterial = input.material.length > LONG_MATERIAL_THRESHOLD;
+function splitMaterialIntoSections(material, sectionCount) {
+  return Array.from({ length: sectionCount }, (_, index) => {
+    const start = Math.floor(material.length * index / sectionCount);
+    const end = index === sectionCount - 1
+      ? material.length
+      : Math.floor(material.length * (index + 1) / sectionCount);
+    return material.slice(start, end);
+  });
+}
+
+function sampleMaterialEvenly(material, maxLength) {
+  if (material.length <= maxLength) return material;
+
+  const excerptCount = 4;
+  const separator = "\n\n[... omitted ...]\n\n";
+  const excerptLength = Math.floor((maxLength - separator.length * (excerptCount - 1)) / excerptCount);
+  const lastStart = material.length - excerptLength;
+  const excerpts = Array.from({ length: excerptCount }, (_, index) => {
+    const start = Math.floor(lastStart * index / (excerptCount - 1));
+    return material.slice(start, start + excerptLength);
+  });
+  return excerpts.join(separator);
+}
+
+function distributeQuestionCount(questionCount, sectionCount) {
+  const baseCount = Math.floor(questionCount / sectionCount);
+  const extraCount = questionCount % sectionCount;
+  return Array.from(
+    { length: sectionCount },
+    (_, index) => baseCount + (index < extraCount ? 1 : 0)
+  );
+}
+
+async function callLongMaterialQuiz(input, apiKey, fetchImpl) {
+  const sectionCount = Math.min(
+    input.questionCount,
+    LONG_QUIZ_MAX_PARALLEL_REQUESTS,
+    Math.ceil(input.material.length / LONG_QUIZ_SECTION_CHAR_LIMIT)
+  );
+  const sections = splitMaterialIntoSections(input.material, sectionCount)
+    .map((section) => sampleMaterialEvenly(section, LONG_QUIZ_SECTION_CHAR_LIMIT));
+  const questionCounts = distributeQuestionCount(input.questionCount, sectionCount);
+  const results = await Promise.all(sections.map((material, index) => callGemini(
+    { ...input, material, questionCount: questionCounts[index] },
+    apiKey,
+    fetchImpl,
+    true
+  )));
+  return { questions: results.flatMap((result) => Array.isArray(result?.questions) ? result.questions : []) };
+}
+
+async function callGemini(input, apiKey, fetchImpl, forceLongMaterialModel = false) {
+  const isLongMaterial = forceLongMaterialModel || input.material.length > LONG_MATERIAL_THRESHOLD;
   const model = isLongMaterial ? LONG_MATERIAL_GEMINI_MODEL : GEMINI_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
@@ -358,7 +411,9 @@ export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
   }
 
   try {
-    const result = await callGemini(input, keys.geminiApiKey, fetchImpl);
+    const result = input.task === "quiz" && input.material.length > LONG_MATERIAL_THRESHOLD
+      ? await callLongMaterialQuiz(input, keys.geminiApiKey, fetchImpl)
+      : await callGemini(input, keys.geminiApiKey, fetchImpl);
     return validateStudyResult(input.task, result, input.questionCount);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown Gemini error";

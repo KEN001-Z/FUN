@@ -194,29 +194,81 @@ test("retries a transient Gemini 503 and succeeds without using another provider
   assert.equal(result.questions.length, 6);
 });
 
-test("uses Gemini Flash-Lite for long study material without truncating it", async () => {
-  const material = "Long study notes. ".repeat(2_000);
-  let capturedUrl;
-  let capturedBody;
+test("splits long CBT material across bounded Flash-Lite requests", async () => {
+  const material = "A".repeat(200_000);
+  for (const questionCount of [6, 100]) {
+    let calls = 0;
+    const capturedSections = [];
+    const capturedQuestionCounts = [];
+    const result = await generateStudyContent(
+      { task: "quiz", topic: "Biology", material, questionCount },
+      { geminiApiKey: "test-gemini-key" },
+      async (url, options) => {
+        calls += 1;
+        const batchIndex = calls;
+        const request = JSON.parse(options.body);
+        const prompt = request.contents[0].parts[0].text;
+        const sectionStart = prompt.indexOf("Study material:\n") + "Study material:\n".length;
+        const batchQuestionCount = Number(prompt.match(/Create exactly (\d+) clear/)[1]);
+        capturedSections.push(prompt.slice(sectionStart));
+        capturedQuestionCounts.push(batchQuestionCount);
+        assert.match(url, /models\/gemini-3\.5-flash-lite:generateContent/);
+        assert.equal(request.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [{
+              content: {
+                parts: [{
+                  text: JSON.stringify({
+                    questions: makeQuestions(batchQuestionCount).map((question, index) => ({
+                      ...question,
+                      question: `Batch ${batchIndex} question ${index + 1}?`
+                    }))
+                  })
+                }]
+              }
+            }]
+          })
+        };
+      }
+    );
+
+    assert.equal(calls, 6);
+    assert.equal(capturedSections.join(""), material);
+    assert.ok(capturedSections.every((section) => section.length <= 36_000));
+    assert.equal(capturedQuestionCounts.reduce((sum, count) => sum + count, 0), questionCount);
+    assert.ok(Math.max(...capturedQuestionCounts) - Math.min(...capturedQuestionCounts) <= 1);
+    assert.equal(result.questions.length, questionCount);
+  }
+});
+
+test("samples long study material across its full length for a one-question quiz", async () => {
+  const material = ["A", "B", "C", "D"].map((section) => section.repeat(50_000)).join("");
+  let capturedPrompt;
   await generateStudyContent(
-    { task: "quiz", topic: "Biology", material },
+    { task: "quiz", topic: "Biology", material, questionCount: 1 },
     { geminiApiKey: "test-gemini-key" },
-    async (url, options) => {
-      capturedUrl = url;
-      capturedBody = JSON.parse(options.body);
+    async (_url, options) => {
+      capturedPrompt = JSON.parse(options.body).contents[0].parts[0].text;
       return {
         ok: true,
         status: 200,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: JSON.stringify({ questions: sampleQuestions }) }] } }]
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ questions: makeQuestions(1) }) }] } }]
         })
       };
     }
   );
 
-  assert.match(capturedUrl, /models\/gemini-3\.5-flash-lite:generateContent/);
-  assert.ok(capturedBody.contents[0].parts[0].text.includes(material.trim()));
-  assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "minimal");
+  const sectionStart = capturedPrompt.indexOf("Study material:\n") + "Study material:\n".length;
+  const submittedMaterial = capturedPrompt.slice(sectionStart);
+  assert.ok(submittedMaterial.length <= 36_000);
+  for (const section of ["A", "B", "C", "D"]) {
+    assert.ok(submittedMaterial.includes(section.repeat(100)));
+  }
+  assert.match(submittedMaterial, /\[\.\.\. omitted \.\.\.\]/);
 });
 
 test("generates exactly the requested number of CBT questions", async () => {
