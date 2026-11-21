@@ -16,7 +16,7 @@ window.requestStudyTask = async function requestStudyTask(task, payload, options
         throw new Error("Gemini is temporarily unavailable. Please try again shortly.");
       }
       if (response.status === 504) {
-        throw new Error("Gemini took too long to respond. Try again with shorter study material.");
+        throw new Error("Gemini took too long to respond. Please try again or choose fewer questions.");
       }
       if (response.status === 429) {
         throw new Error("Gemini rate limit or quota reached. Please try again later.");

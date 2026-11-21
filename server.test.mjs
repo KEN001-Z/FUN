@@ -216,18 +216,20 @@ test("uses Gemini Flash-Lite for long study material without truncating it", asy
 
   assert.match(capturedUrl, /models\/gemini-3\.5-flash-lite:generateContent/);
   assert.ok(capturedBody.contents[0].parts[0].text.includes(material.trim()));
-  assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "medium");
+  assert.equal(capturedBody.generationConfig.thinkingConfig.thinkingLevel, "minimal");
 });
 
 test("generates exactly the requested number of CBT questions", async () => {
   for (const questionCount of [1, 100]) {
     let capturedPrompt;
+    let thinkingLevel;
     const result = await generateStudyContent(
       { task: "quiz", topic: "Biology", questionCount },
       { geminiApiKey: "test-gemini-key" },
       async (_url, options) => {
         const request = JSON.parse(options.body);
         capturedPrompt = request.contents[0].parts[0].text;
+        thinkingLevel = request.generationConfig.thinkingConfig.thinkingLevel;
         return {
           ok: true,
           status: 200,
@@ -243,6 +245,7 @@ test("generates exactly the requested number of CBT questions", async () => {
     );
 
     assert.match(capturedPrompt, new RegExp(`Create exactly ${questionCount} `));
+    assert.equal(thinkingLevel, "medium");
     assert.equal(result.questions.length, questionCount);
   }
 });

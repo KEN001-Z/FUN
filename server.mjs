@@ -294,9 +294,8 @@ function parseGeneratedJson(text, provider) {
 }
 
 async function callGemini(input, apiKey, fetchImpl) {
-  const model = input.material.length > LONG_MATERIAL_THRESHOLD
-    ? LONG_MATERIAL_GEMINI_MODEL
-    : GEMINI_MODEL;
+  const isLongMaterial = input.material.length > LONG_MATERIAL_THRESHOLD;
+  const model = isLongMaterial ? LONG_MATERIAL_GEMINI_MODEL : GEMINI_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const deadline = Date.now() + PROVIDER_TIMEOUT_MS;
   for (let attempt = 0; attempt <= GEMINI_RETRY_DELAYS_MS.length; attempt += 1) {
@@ -321,7 +320,7 @@ async function callGemini(input, apiKey, fetchImpl) {
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: RESPONSE_SCHEMAS[input.task],
-            thinkingConfig: { thinkingLevel: "medium" }
+            thinkingConfig: { thinkingLevel: isLongMaterial ? "minimal" : "medium" }
           }
         }),
         signal: controller.signal
@@ -371,7 +370,7 @@ export async function generateStudyContent(payload, keys, fetchImpl = fetch) {
       throw new HttpError(429, "Gemini rate limit or quota reached. Please try again later or check your Google AI usage limits.");
     }
     if (error instanceof ProviderError && error.status === 504) {
-      throw new HttpError(504, "Gemini took too long to respond. Try again with shorter study material.");
+      throw new HttpError(504, "Gemini took too long to respond. Please try again or choose fewer questions.");
     }
     throw new HttpError(502, "Gemini couldn't complete this study request. Check the Gemini API key, model, quota, and server logs.");
   }
