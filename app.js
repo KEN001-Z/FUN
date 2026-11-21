@@ -113,6 +113,7 @@ class FlashcardApp {
     };
 
     this.restoreDeck();
+    this.populateQuestionCountOptions();
     this.bindEvents();
     this.renderGreeting();
     this.renderPracticeHistory();
@@ -139,6 +140,19 @@ class FlashcardApp {
     } catch (error) {
       console.warn("Couldn't restore the current flashcard deck.", error);
     }
+  }
+
+  populateQuestionCountOptions() {
+    const select = this.elements.questionCountInput;
+    if (!select) return;
+
+    for (let count = 1; count <= 100; count += 1) {
+      const option = document.createElement("option");
+      option.value = String(count);
+      option.textContent = `${count} ${count === 1 ? "question" : "questions"}`;
+      select.append(option);
+    }
+    select.value = "6";
   }
 
   saveDeck() {
